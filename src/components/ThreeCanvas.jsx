@@ -172,7 +172,7 @@ function DNAHelix({ scrollPercent }) {
           </mesh>
 
           {/* Connecting bar */}
-          <mesh position={[0, 0, 0]} rotation={[0, 0, s.angle]}>
+          <mesh position={[0, 0, 0]} rotation={[0, -s.angle, Math.PI / 2]}>
             <cylinderGeometry args={[0.04, 0.04, radius * 2, 8]} />
             <primitive object={materialBar} attach="material" />
           </mesh>
