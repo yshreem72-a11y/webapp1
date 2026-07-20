@@ -40,7 +40,9 @@ import {
   EyeOff,
   Database,
   Grid,
-  ExternalLink
+  ExternalLink,
+  ShieldAlert as SecurityIcon,
+  KeyRound
 } from 'lucide-react'
 
 // Icon helper to render correct lucide icon from string name
@@ -63,17 +65,21 @@ export default function App() {
   // Navigation & UI States
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [isAuthViewOpen, setIsAuthViewOpen] = useState(false)
-  const [isDashboardActive, setIsDashboardActive] = useState(false) // Toggle whetherlogged-in user is viewing the Admin Dashboard
+  const [isDashboardActive, setIsDashboardActive] = useState(false) // Toggle whether logged-in user is viewing the Admin Dashboard
   const [selectedProduct, setSelectedProduct] = useState(null)
   
   // Firebase Auth State
   const [user, setUser] = useState(null)
   const [authEmail, setAuthEmail] = useState('')
   const [authPassword, setAuthPassword] = useState('')
+  const [authInvitationKey, setAuthInvitationKey] = useState('') // Staff Invitation Passcode input
   const [authMode, setAuthMode] = useState('login') // 'login' or 'register'
   const [authError, setAuthError] = useState('')
   const [authLoading, setAuthLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
+
+  // Secret staff invitation code required for sign-up
+  const SECRET_STAFF_INVITATION_CODE = "CENTRAL_DISPENSARY_2026"
 
   // Dashboard Tab selection
   const [dashboardTab, setDashboardTab] = useState('inventory') // 'inventory' or 'inbox'
@@ -85,7 +91,7 @@ export default function App() {
   // Live Chat Simulator State
   const [isChatOpen, setIsChatOpen] = useState(false)
   const [chatMessages, setChatMessages] = useState([
-    { sender: 'bot', text: 'Hello! I am Sarah, your registered pharmacist. How can I assist you with your health and wellness today? 🌿' }
+    { sender: 'bot', text: 'Hello! I am Sarah, your registered molecular pharmacist. How can I assist you with your biotech and cellular optimization today? 🧬' }
   ])
   const [chatInput, setChatInput] = useState('')
   const chatEndRef = useRef(null)
@@ -196,9 +202,22 @@ export default function App() {
   const handleAuthSubmit = async (e) => {
     e.preventDefault()
     setAuthError('')
+    
     if (!authEmail.trim() || !authPassword.trim()) {
       setAuthError('Please enter both email and password.')
       return
+    }
+
+    // SECURITY FIX: Restrict Sign-Up Mode behind the Secret Staff Invitation Key
+    if (authMode === 'register') {
+      if (!authInvitationKey.trim()) {
+        setAuthError('A valid Staff Registration Invitation Key is required to create a pharmacist account.')
+        return
+      }
+      if (authInvitationKey.trim() !== SECRET_STAFF_INVITATION_CODE) {
+        setAuthError('Unauthorized Staff Invitation Key. Only licensed pharmacists with valid dispensary codes can register staff profiles.')
+        return
+      }
     }
 
     setAuthLoading(true)
@@ -209,7 +228,7 @@ export default function App() {
         confetti({
           particleCount: 80,
           spread: 50,
-          colors: ['#4ade80', '#15803d']
+          colors: ['#00ff66', '#004d1f']
         })
         setIsAuthViewOpen(false)
         setAuthEmail('')
@@ -220,12 +239,13 @@ export default function App() {
         confetti({
           particleCount: 120,
           spread: 60,
-          colors: ['#4ade80', '#bbf7d0', '#ffffff']
+          colors: ['#00ff66', '#bbf7d0', '#ffffff']
         })
-        alert("Account successfully created with Firebase! Logged in as pharmacist.")
+        alert("Staff account registered successfully! Logged in as licensed pharmacist.")
         setIsAuthViewOpen(false)
         setAuthEmail('')
         setAuthPassword('')
+        setAuthInvitationKey('')
       }
     } catch (err) {
       console.error("Auth error details:", err)
@@ -271,7 +291,7 @@ export default function App() {
       particleCount: 150,
       spread: 80,
       origin: { y: 0.8 },
-      colors: ['#4ade80', '#86efac', '#22c55e', '#ffffff']
+      colors: ['#00ff66', '#00b347', '#bbf7d0', '#ffffff']
     })
 
     setFormSubmitted(true)
@@ -316,7 +336,7 @@ export default function App() {
     confetti({
       particleCount: 80,
       spread: 50,
-      colors: ['#86efac', '#22c55e']
+      colors: ['#00ff66', '#00b347']
     })
 
     // Reset form
@@ -354,19 +374,19 @@ export default function App() {
 
     // Simulate pharmacist response
     setTimeout(() => {
-      let responseText = "Thank you for sharing. Let me check that for you. Is there any particular symptom you are noticing?"
+      let responseText = "Thank you for sharing. Let me check that molecular pathway for you. Are you tracking specific symptoms?"
       const inputLower = chatInput.toLowerCase()
       
       if (inputLower.includes('hello') || inputLower.includes('hi')) {
-        responseText = "Hello there! What wellness questions can I answer for you today? 🌿"
+        responseText = "Hello there! What biotech or pharmacological questions can I answer for you today? 🧬"
       } else if (inputLower.includes('delivery') || inputLower.includes('shipping')) {
-        responseText = "We offer same-day delivery on all orders using electric cargo bikes. If you order before 2 PM, it will arrive today! 🚲"
+        responseText = "We offer same-day clinical courier delivery. Our thermal-locked containers preserve all bio-active peptides perfectly! 🚲"
       } else if (inputLower.includes('prescription') || inputLower.includes('rx')) {
-        responseText = "Transferring a prescription is incredibly easy! We handle everything. Just fill out our contact form below or give us a direct call at +1 (800) ECO-PHAR."
-      } else if (inputLower.includes('supplement') || inputLower.includes('vitamin')) {
-        responseText = "All our supplements are third-party tested and vegan. You can search our live database right on this page! Let me know if you need specific product recommendations."
+        responseText = "Prescription transfer is completely automated. Submit our secure encryption contact form at the bottom, and we will port your records within 15 minutes."
+      } else if (inputLower.includes('supplement') || inputLower.includes('vitamin') || inputLower.includes('nmn')) {
+        responseText = "All molecules, including our premium NMN Longevity Matrix, undergo certified HPLC purity testing. You can search our active database right on this page!"
       } else if (inputLower.includes('organic') || inputLower.includes('natural')) {
-        responseText = "Indeed! We focus heavily on natural, plant-derived alternatives with zero toxic binders or microplastics."
+        responseText = "Indeed. We compound using zero heavy metals, microplastics, or standard chemical binders."
       }
 
       setChatMessages(prev => [...prev, { sender: 'bot', text: responseText }])
@@ -401,57 +421,60 @@ export default function App() {
     localStorage.setItem('central_pharm_submissions', JSON.stringify(updated))
   }
 
-  // Render Admin Dashboard
+  // Render Admin Dashboard (FULL SCREEN DARK MODE BIOTECH PORTAL)
   if (isDashboardActive && user) {
     return (
-      <div className="min-h-screen bg-[#f1f8f4] text-slate-800 flex flex-col justify-between selection:bg-pharm-200 selection:text-pharm-900 font-sans">
+      <div className="min-h-screen bg-[#020603] text-slate-100 flex flex-col justify-between selection:bg-biotech-800 selection:text-biotech-200 font-sans">
         
         {/* Dashboard Top Header */}
-        <header className="bg-white border-b border-pharm-100 shadow-sm sticky top-0 z-40">
+        <header className="bg-[#050f07] border-b border-biotech-900/60 sticky top-0 z-40">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
             {/* Branding */}
             <div className="flex items-center space-x-3">
-              <div className="bg-pharm-600 text-white p-2.5 rounded-full shadow">
+              <div className="bg-biotech-600 text-[#020603] p-2.5 rounded-full shadow shadow-biotech-500/30">
                 <ShieldCheck className="w-6 h-6" />
               </div>
               <div className="text-left">
-                <span className="text-xl font-black text-slate-900 block">Pharmacist Command Center</span>
-                <div className="flex items-center space-x-2">
-                  <span className="text-xs font-semibold text-pharm-700 block">
-                    Logged in: {user.displayName || user.email}
+                <span className="text-xl font-black text-white tracking-tight flex items-center space-x-2">
+                  <span>Pharmacist Command Center</span>
+                  <span className="hidden sm:inline text-xs bg-biotech-900 border border-biotech-500 text-biotech-300 font-extrabold px-2 py-0.5 rounded-md uppercase tracking-widest">ADMIN</span>
+                </span>
+                <div className="flex items-center space-x-2 mt-0.5">
+                  <span className="text-xs font-semibold text-biotech-400 block">
+                    Identity: {user.displayName || user.email}
                   </span>
                   <span className={`text-[10px] font-bold px-1.5 py-0.2 rounded-md ${
-                    isRealFirebaseActive ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'
+                    isRealFirebaseActive ? 'bg-emerald-950/80 text-biotech-300 border border-biotech-500/40' : 'bg-amber-950/80 text-amber-300 border border-amber-500/40'
                   }`}>
-                    {isRealFirebaseActive ? '🔥 Firebase Live' : '⚙️ Sandbox Mode'}
+                    {isRealFirebaseActive ? '🔥 Firebase Production' : '⚙️ Sandbox Mode'}
                   </span>
                 </div>
               </div>
             </div>
 
             {/* Dashboard Tabs for Wide Screen */}
-            <div className="hidden md:flex space-x-2 bg-slate-100 p-1.5 rounded-2xl border border-slate-200">
+            <div className="hidden md:flex space-x-2 bg-[#020603] p-1.5 rounded-2xl border border-biotech-900/50">
               <button
                 onClick={() => setDashboardTab('inventory')}
                 className={`flex items-center space-x-2 px-6 py-2.5 rounded-xl text-xs font-bold transition-all ${
                   dashboardTab === 'inventory'
-                    ? 'bg-white text-pharm-950 shadow-md'
-                    : 'text-slate-600 hover:text-slate-950'
+                    ? 'bg-biotech-950 border border-biotech-500/50 text-white shadow-glow-green-sm'
+                    : 'text-biotech-400 hover:text-white'
                 }`}
               >
                 <Package className="w-4 h-4" />
-                <span>📦 Manage Store Inventory ({productsList.length})</span>
+                <span>Manage Store Inventory ({productsList.length})</span>
               </button>
               <button
                 onClick={() => setDashboardTab('inbox')}
                 className={`flex items-center space-x-2 px-6 py-2.5 rounded-xl text-xs font-bold transition-all ${
                   dashboardTab === 'inbox'
-                    ? 'bg-white text-pharm-950 shadow-md'
-                    : 'text-slate-600 hover:text-slate-950'
+                    ? 'bg-biotech-950 border border-biotech-500/50 text-white shadow-glow-green-sm'
+                    : 'text-biotech-400 hover:text-white'
                 }`}
               >
                 <Inbox className="w-4 h-4" />
-                <span>📬 Patient Inquiries ({submissions.length})</span>
+                <span>Patient Inquiries ({submissions.length})</span>
               </button>
             </div>
 
@@ -459,15 +482,15 @@ export default function App() {
             <div className="flex items-center space-x-3">
               <button
                 onClick={() => setIsDashboardActive(false)}
-                className="flex items-center space-x-1.5 px-4 h-11 border border-slate-200 hover:bg-slate-50 text-slate-700 text-sm font-semibold rounded-xl transition-all shadow-sm"
+                className="flex items-center space-x-1.5 px-4 h-11 border border-biotech-900 hover:border-biotech-500/30 text-biotech-400 hover:text-white text-sm font-semibold rounded-xl transition-all"
               >
                 <ExternalLink className="w-4 h-4" />
-                <span className="hidden sm:inline">Back to Live Site</span>
+                <span className="hidden sm:inline">View Public Portal</span>
               </button>
 
               <button
                 onClick={handleLogout}
-                className="flex items-center justify-center bg-red-50 hover:bg-red-100 text-red-600 w-11 h-11 rounded-xl transition-colors shadow-sm"
+                className="flex items-center justify-center bg-red-950/40 border border-red-900/60 hover:bg-red-950 hover:border-red-500 text-red-400 w-11 h-11 rounded-xl transition-all"
                 title="Sign Out"
               >
                 <LogOut className="w-5 h-5" />
@@ -476,11 +499,11 @@ export default function App() {
           </div>
 
           {/* Mobile Tabs */}
-          <div className="md:hidden border-t border-slate-100 flex p-2 bg-slate-50">
+          <div className="md:hidden border-t border-biotech-900/40 flex p-2 bg-[#050f07]">
             <button
               onClick={() => setDashboardTab('inventory')}
               className={`flex-1 flex items-center justify-center space-x-1 py-3 text-xs font-extrabold rounded-xl transition-all ${
-                dashboardTab === 'inventory' ? 'bg-white text-pharm-950 shadow-sm border border-slate-200' : 'text-slate-500'
+                dashboardTab === 'inventory' ? 'bg-[#020603] text-white border border-biotech-900 shadow-glow-green-sm' : 'text-biotech-400'
               }`}
             >
               <Package className="w-4.5 h-4.5" />
@@ -489,7 +512,7 @@ export default function App() {
             <button
               onClick={() => setDashboardTab('inbox')}
               className={`flex-1 flex items-center justify-center space-x-1 py-3 text-xs font-extrabold rounded-xl transition-all ${
-                dashboardTab === 'inbox' ? 'bg-white text-pharm-950 shadow-sm border border-slate-200' : 'text-slate-500'
+                dashboardTab === 'inbox' ? 'bg-[#020603] text-white border border-biotech-900 shadow-glow-green-sm' : 'text-biotech-400'
               }`}
             >
               <Inbox className="w-4.5 h-4.5" />
@@ -506,35 +529,35 @@ export default function App() {
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
               
               {/* Left Column: Register Product form */}
-              <div className="lg:col-span-5 bg-white p-6 sm:p-8 rounded-3xl border border-pharm-100 shadow-xl shadow-pharm-100/10 text-left space-y-6">
+              <div className="lg:col-span-5 bg-[#050f07] p-6 sm:p-8 rounded-3xl border border-biotech-900/60 shadow-2xl text-left space-y-6">
                 <div>
-                  <h3 className="text-xl font-extrabold text-slate-900 flex items-center space-x-2">
-                    <Plus className="w-5 h-5 text-pharm-600" />
-                    <span>Register New Apothecary Medication</span>
+                  <h3 className="text-xl font-extrabold text-white flex items-center space-x-2">
+                    <Plus className="w-5 h-5 text-biotech-400" />
+                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-white to-biotech-300">Register Bio-Active Stock</span>
                   </h3>
-                  <p className="text-xs text-slate-500 mt-1">Register organic products instantly into the active customer storefront.</p>
+                  <p className="text-xs text-biotech-400/80 mt-1">Register molecular structures instantly into the storefront active catalog.</p>
                 </div>
 
                 <form onSubmit={handleAddProduct} className="space-y-4">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-1">
-                      <label className="text-xs font-bold text-slate-600 uppercase block">Product Name *</label>
+                      <label className="text-[10px] font-extrabold text-biotech-300 uppercase tracking-widest block">Product Name *</label>
                       <input
                         type="text"
                         required
-                        placeholder="e.g. Pure Zinc Defense"
+                        placeholder="e.g. Zinc Peptide"
                         value={newProduct.name}
                         onChange={(e) => setNewProduct({...newProduct, name: e.target.value})}
-                        className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-4 focus:ring-pharm-50 focus:bg-white focus:border-pharm-500 transition-all outline-none"
+                        className="w-full px-4 py-3 bg-[#020603] border border-biotech-900 rounded-xl text-sm focus:ring-4 focus:ring-biotech-950 focus:border-biotech-400 transition-all outline-none text-white"
                       />
                     </div>
 
                     <div className="space-y-1">
-                      <label className="text-xs font-bold text-slate-600 uppercase block">Category *</label>
+                      <label className="text-[10px] font-extrabold text-biotech-300 uppercase tracking-widest block">Category *</label>
                       <select
                         value={newProduct.category}
                         onChange={(e) => setNewProduct({...newProduct, category: e.target.value})}
-                        className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-4 focus:ring-pharm-50 focus:bg-white focus:border-pharm-500 transition-all outline-none bg-white"
+                        className="w-full px-4 py-3 bg-[#020603] border border-biotech-900 rounded-xl text-sm focus:ring-4 focus:ring-biotech-950 focus:border-biotech-400 transition-all outline-none bg-white text-white"
                       >
                         <option value="Medicines">Medicines</option>
                         <option value="Supplements">Supplements</option>
@@ -545,7 +568,7 @@ export default function App() {
 
                   <div className="grid grid-cols-3 gap-4">
                     <div className="space-y-1 col-span-1">
-                      <label className="text-xs font-bold text-slate-600 uppercase block">Price ($) *</label>
+                      <label className="text-[10px] font-extrabold text-biotech-300 uppercase tracking-widest block">Price ($) *</label>
                       <input
                         type="number"
                         step="0.01"
@@ -553,16 +576,16 @@ export default function App() {
                         placeholder="19.99"
                         value={newProduct.price}
                         onChange={(e) => setNewProduct({...newProduct, price: e.target.value})}
-                        className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-4 focus:ring-pharm-50 focus:bg-white focus:border-pharm-500 transition-all outline-none"
+                        className="w-full px-4 py-3 bg-[#020603] border border-biotech-900 rounded-xl text-sm focus:ring-4 focus:ring-biotech-950 focus:border-biotech-400 transition-all outline-none text-white"
                       />
                     </div>
 
                     <div className="space-y-1 col-span-1">
-                      <label className="text-xs font-bold text-slate-600 uppercase block">Badge</label>
+                      <label className="text-[10px] font-extrabold text-biotech-300 uppercase tracking-widest block">Badge</label>
                       <select
                         value={newProduct.badge}
                         onChange={(e) => setNewProduct({...newProduct, badge: e.target.value})}
-                        className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-4 focus:ring-pharm-50 focus:bg-white focus:border-pharm-500 transition-all outline-none bg-white"
+                        className="w-full px-4 py-3 bg-[#020603] border border-biotech-900 rounded-xl text-sm focus:ring-4 focus:ring-biotech-950 focus:border-biotech-400 transition-all outline-none bg-white text-white"
                       >
                         <option value="Eco-Choice">Eco-Choice</option>
                         <option value="Organic">Organic</option>
@@ -574,90 +597,89 @@ export default function App() {
                     </div>
 
                     <div className="space-y-1 col-span-1">
-                      <label className="text-xs font-bold text-slate-600 uppercase block">Emoji Icon</label>
+                      <label className="text-[10px] font-extrabold text-biotech-300 uppercase tracking-widest block">Emoji Icon</label>
                       <select
                         value={newProduct.icon}
                         onChange={(e) => setNewProduct({...newProduct, icon: e.target.value})}
-                        className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-4 focus:ring-pharm-50 focus:bg-white focus:border-pharm-500 transition-all outline-none bg-white text-base"
+                        className="w-full px-4 py-3 bg-[#020603] border border-biotech-900 rounded-xl text-sm focus:ring-4 focus:ring-biotech-950 focus:border-biotech-400 transition-all outline-none bg-white text-white text-base"
                       >
                         <option value="🌿">🌿 Herbs</option>
+                        <option value="🧬">🧬 DNA</option>
                         <option value="💊">💊 Pill</option>
                         <option value="🍯">🍯 Honey</option>
                         <option value="🌸">🌸 Flower</option>
                         <option value="💧">💧 Drops</option>
-                        <option value="🧘">🧘 Yogi</option>
+                        <option value="🧠">🧠 Brain</option>
                         <option value="☀️">☀️ Sun</option>
-                        <option value="🍎">🍎 Apple</option>
                         <option value="⚡">⚡ Bolt</option>
                         <option value="🍒">🍒 Cherry</option>
+                        <option value="🧪">🧪 Tube</option>
                       </select>
                     </div>
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-xs font-bold text-slate-600 uppercase block">Clinical Description *</label>
+                    <label className="text-[10px] font-extrabold text-biotech-300 uppercase tracking-widest block">Molecular Action / Description *</label>
                     <textarea
                       rows={3}
                       required
-                      placeholder="Write how this item is harvested and its clinical wellness benefits..."
+                      placeholder="Write how this item targets cellular receptors and its direct biological benefits..."
                       value={newProduct.description}
                       onChange={(e) => setNewProduct({...newProduct, description: e.target.value})}
-                      className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-4 focus:ring-pharm-50 focus:bg-white focus:border-pharm-500 transition-all outline-none"
+                      className="w-full px-4 py-3 bg-[#020603] border border-biotech-900 rounded-xl text-sm focus:ring-4 focus:ring-biotech-950 focus:border-biotech-400 transition-all outline-none text-white placeholder-slate-600"
                     ></textarea>
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-xs font-bold text-slate-600 uppercase block">Key Features (comma separated)</label>
+                    <label className="text-[10px] font-extrabold text-biotech-300 uppercase tracking-widest block">Key Features (comma separated)</label>
                     <input
                       type="text"
-                      placeholder="100% Organic, Vegan Capsules, Recyclable Jar"
+                      placeholder="99.8% Certified Purity, Liposomal, Lab-Tested"
                       value={newProduct.featuresRaw}
                       onChange={(e) => setNewProduct({...newProduct, featuresRaw: e.target.value})}
-                      className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-4 focus:ring-pharm-50 focus:bg-white focus:border-pharm-500 transition-all outline-none"
+                      className="w-full px-4 py-3 bg-[#020603] border border-biotech-900 rounded-xl text-sm focus:ring-4 focus:ring-biotech-950 focus:border-biotech-400 transition-all outline-none text-white placeholder-slate-600"
                     />
                   </div>
 
                   <button
                     type="submit"
-                    className="w-full py-3.5 bg-pharm-600 hover:bg-pharm-700 text-white font-bold rounded-xl shadow-md transition-colors text-sm"
+                    className="w-full py-4 bg-biotech-600 hover:bg-biotech-500 hover:shadow-glow-green text-[#020603] font-black rounded-xl transition-all text-sm uppercase tracking-wider"
                   >
-                    Register Medication Info
+                    Commit Molecular Structure
                   </button>
                 </form>
               </div>
 
               {/* Right Column: Inventory database directory list */}
-              <div className="lg:col-span-7 bg-white p-6 sm:p-8 rounded-3xl border border-pharm-100 shadow-xl shadow-pharm-100/10 text-left space-y-6">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                  <div>
-                    <h3 className="text-xl font-extrabold text-slate-900 flex items-center space-x-2">
-                      <Database className="w-5 h-5 text-pharm-600" />
-                      <span>Active Inventory Catalogue ({productsList.length} items)</span>
-                    </h3>
-                    <p className="text-xs text-slate-500 mt-1">Deregistering any medicine immediately removes it from the customer storefront.</p>
-                  </div>
+              <div className="lg:col-span-7 bg-[#050f07] p-6 sm:p-8 rounded-3xl border border-biotech-900/60 shadow-2xl text-left space-y-6">
+                <div>
+                  <h3 className="text-xl font-extrabold text-white flex items-center space-x-2">
+                    <Database className="w-5 h-5 text-biotech-400" />
+                    <span>Active Stock Directory ({productsList.length} items)</span>
+                  </h3>
+                  <p className="text-xs text-biotech-400/80 mt-1">Deregistering any medicine immediately removes it from the customer storefront.</p>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-h-[600px] overflow-y-auto pr-1">
                   {productsList.map((prod) => (
                     <div
                       key={prod.id}
-                      className="flex items-center justify-between p-4 bg-slate-50/50 border border-slate-100 hover:bg-slate-50 rounded-2xl transition-all"
+                      className="flex items-center justify-between p-4 bg-[#020603]/80 border border-biotech-900/40 hover:border-biotech-500/30 rounded-2xl transition-all"
                     >
                       <div className="flex items-center space-x-3 text-left overflow-hidden">
-                        <span className="text-4xl bg-white p-2 rounded-xl border border-slate-100 flex-shrink-0">{prod.icon}</span>
+                        <span className="text-4xl bg-[#050f07] p-2.5 rounded-xl border border-biotech-900 flex-shrink-0">{prod.icon}</span>
                         <div className="overflow-hidden">
-                          <span className="font-bold text-slate-950 text-sm block leading-tight truncate">{prod.name}</span>
-                          <span className="text-[10px] text-pharm-700 font-extrabold uppercase tracking-wider block mt-1">
+                          <span className="font-bold text-white text-sm block leading-tight truncate">{prod.name}</span>
+                          <span className="text-[10px] text-biotech-400 font-extrabold uppercase tracking-wider block mt-1">
                             {prod.category}
                           </span>
-                          <span className="text-xs text-slate-500 font-bold block mt-0.5">${prod.price.toFixed(2)}</span>
+                          <span className="text-xs text-biotech-300 font-bold block mt-0.5">${prod.price.toFixed(2)}</span>
                         </div>
                       </div>
 
                       <button
                         onClick={() => handleDeleteProduct(prod.id)}
-                        className="p-3 hover:bg-red-50 hover:text-red-500 text-slate-400 rounded-xl transition-colors flex-shrink-0"
+                        className="p-3 hover:bg-red-950/50 hover:text-red-400 text-slate-500 rounded-xl transition-colors flex-shrink-0"
                         title="Remove product"
                       >
                         <Trash2 className="w-5 h-5" />
@@ -672,13 +694,13 @@ export default function App() {
 
           {/* --- TAB 2: PATIENT INBOX SUBMISSIONS VIEW --- */}
           {dashboardTab === 'inbox' && (
-            <div className="bg-white p-6 sm:p-8 rounded-3xl border border-pharm-100 shadow-xl shadow-pharm-100/10 text-left space-y-6">
+            <div className="bg-[#050f07] p-6 sm:p-8 rounded-3xl border border-biotech-900/60 shadow-2xl text-left space-y-6">
               <div>
-                <h3 className="text-xl font-extrabold text-slate-900 flex items-center space-x-2">
-                  <Mail className="w-5 h-5 text-pharm-600" />
-                  <span>Clinical Submissions Inbox ({submissions.length} queries)</span>
+                <h3 className="text-xl font-extrabold text-white flex items-center space-x-2">
+                  <Mail className="w-5 h-5 text-biotech-400" />
+                  <span>Clinical Prescription Inbox ({submissions.length} queries)</span>
                 </h3>
-                <p className="text-xs text-slate-500 mt-1">Check prescription transfers, compounding formulations, and clinical consultation requests.</p>
+                <p className="text-xs text-biotech-400/80 mt-1">Check automated prescription transfers, compounding formulations, and clinical genetic inquiries.</p>
               </div>
 
               {submissions.length > 0 ? (
@@ -688,31 +710,31 @@ export default function App() {
                       key={sub.id}
                       className={`border rounded-2xl p-6 transition-all relative ${
                         sub.status === 'Unread'
-                          ? 'bg-pharm-50/40 border-pharm-200 shadow-sm'
-                          : 'bg-white border-slate-100'
+                          ? 'bg-biotech-950/60 border-biotech-500/40 shadow-glow-green-sm'
+                          : 'bg-[#020603]/80 border-biotech-900/40'
                       }`}
                     >
                       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-4">
                         <div>
-                          <span className="block font-bold text-slate-950 text-base">{sub.name}</span>
-                          <span className="text-xs text-slate-400 block mt-0.5">{sub.date}</span>
-                          <span className="text-xs font-semibold text-pharm-700 block mt-1">{sub.email}</span>
+                          <span className="block font-bold text-white text-base">{sub.name}</span>
+                          <span className="text-xs text-biotech-400/80 block mt-0.5">{sub.date}</span>
+                          <span className="text-xs font-semibold text-biotech-300 block mt-1">{sub.email}</span>
                         </div>
 
                         <div className="flex items-center space-x-2">
                           <button
                             onClick={() => toggleReadStatus(sub.id)}
-                            className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase transition-all ${
+                            className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all border ${
                               sub.status === 'Unread'
-                                ? 'bg-amber-100 text-amber-800 hover:bg-amber-200'
-                                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                                ? 'bg-amber-950/60 text-amber-300 border-amber-500/40 hover:bg-amber-950'
+                                : 'bg-biotech-900/30 text-biotech-400 border-biotech-900/40 hover:bg-biotech-900/50'
                             }`}
                           >
                             {sub.status}
                           </button>
                           <button
                             onClick={() => deleteSubmission(sub.id)}
-                            className="p-2.5 hover:bg-red-50 hover:text-red-500 rounded-xl text-slate-400 transition-colors"
+                            className="p-2.5 hover:bg-red-950/40 hover:text-red-400 rounded-xl text-slate-500 transition-colors"
                             title="Delete query"
                           >
                             <Trash2 className="w-4 h-4" />
@@ -721,18 +743,18 @@ export default function App() {
                       </div>
 
                       <div className="mb-3">
-                        <span className="text-xs font-bold text-pharm-800 bg-pharm-100 px-3 py-1 rounded-full uppercase tracking-wider">
+                        <span className="text-xs font-bold text-biotech-300 bg-biotech-950/80 border border-biotech-900 px-3 py-1 rounded-full uppercase tracking-wider">
                           {sub.subject}
                         </span>
                       </div>
 
-                      <p className="text-slate-700 text-sm leading-relaxed whitespace-pre-line bg-slate-50 p-4 rounded-xl border border-slate-100 font-medium">
+                      <p className="text-slate-200 text-sm leading-relaxed whitespace-pre-line bg-[#020603]/80 p-4 rounded-xl border border-biotech-900/30 font-medium">
                         {sub.message}
                       </p>
 
                       {sub.phone && sub.phone !== 'Not provided' && (
-                        <div className="mt-3 text-xs font-medium text-slate-500">
-                          📞 Phone callback: <span className="font-bold text-slate-800">{sub.phone}</span>
+                        <div className="mt-3 text-xs font-medium text-biotech-400">
+                          📞 Callback contact: <span className="font-bold text-white">{sub.phone}</span>
                         </div>
                       )}
                     </div>
@@ -740,12 +762,12 @@ export default function App() {
                 </div>
               ) : (
                 <div className="text-center py-24 max-w-sm mx-auto space-y-4">
-                  <div className="bg-slate-50 text-slate-400 p-6 rounded-full inline-block border border-slate-100">
+                  <div className="bg-[#020603] text-biotech-400 p-6 rounded-full inline-block border border-biotech-900/50">
                     <Inbox className="w-10 h-10" />
                   </div>
-                  <h4 className="font-extrabold text-slate-900 text-lg">Inbox is completely empty</h4>
-                  <p className="text-sm text-slate-500">
-                    When a patient sends an inquiry from the homepage, it will register right here!
+                  <h4 className="font-extrabold text-white text-lg">Inbox is completely empty</h4>
+                  <p className="text-sm text-biotech-400/80">
+                    Patient consultation transmissions will map here instantly.
                   </p>
                 </div>
               )}
@@ -755,14 +777,14 @@ export default function App() {
         </main>
 
         {/* Dashboard Footer */}
-        <footer className="bg-white border-t border-slate-100 py-6 text-center text-xs text-slate-400">
+        <footer className="bg-[#050f07] border-t border-biotech-900/60 py-6 text-center text-xs text-biotech-400/80">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
-            <p>© {new Date().getFullYear()} Central Pharm. Secure Pharmacist Administration System.</p>
+            <p>© {new Date().getFullYear()} Central Pharm Biotech. Licensed Molecular Pharmacy Practice.</p>
             <button
               onClick={() => setIsDashboardActive(false)}
-              className="text-pharm-700 hover:text-pharm-900 font-bold flex items-center space-x-1.5"
+              className="text-biotech-400 hover:text-white font-bold flex items-center space-x-1.5"
             >
-              <span>View Customer Storefront</span>
+              <span>Exit Dashboard View</span>
               <ArrowRight className="w-4.5 h-4.5" />
             </button>
           </div>
@@ -772,44 +794,44 @@ export default function App() {
     )
   }
 
-  // STANDARD PUBLIC MARKETING SITE (Default)
+  // STANDARD PUBLIC MARKETING SITE (Dark Futuristic Biotech Theme)
   return (
-    <div className="relative min-h-screen selection:bg-pharm-200 selection:text-pharm-900">
+    <div className="relative min-h-screen bg-[#030904] text-slate-100 selection:bg-biotech-900 selection:text-biotech-300 overflow-x-hidden">
       
       {/* ThreeJS Background Canvas */}
       <ThreeCanvas />
 
       {/* --- HEADER & NAVIGATION --- */}
-      <header className="sticky top-0 z-40 backdrop-blur-md bg-white/70 border-b border-pharm-100/50 transition-all duration-300">
+      <header className="sticky top-0 z-40 backdrop-blur-md bg-[#030904]/70 border-b border-biotech-900/40 transition-all duration-300">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-20">
             {/* Logo */}
             <div className="flex items-center space-x-3 cursor-pointer group" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
-              <div className="bg-pharm-100 text-pharm-700 p-2.5 rounded-full shadow-inner group-hover:scale-110 transition-transform duration-300">
-                <Leaf className="w-6 h-6 fill-pharm-500/10" />
+              <div className="bg-biotech-950 text-biotech-400 p-2.5 rounded-full border border-biotech-900 group-hover:border-biotech-400/50 group-hover:shadow-glow-green-sm transition-all duration-300">
+                <Leaf className="w-6 h-6" />
               </div>
-              <div>
-                <span className="text-2xl font-extrabold tracking-tight text-pharm-950 block">Central Pharm</span>
-                <span className="text-xs font-semibold uppercase tracking-widest text-pharm-600 block -mt-1">Organic & Wellness</span>
+              <div className="text-left">
+                <span className="text-2xl font-black tracking-tight text-white block">Central Pharm</span>
+                <span className="text-[10px] font-bold uppercase tracking-widest text-biotech-400 block -mt-1">Biotech & Longevity</span>
               </div>
             </div>
 
             {/* Desktop Nav */}
-            <nav className="hidden md:flex items-center space-x-8 font-medium text-slate-600">
-              <a href="#hero" className="hover:text-pharm-700 transition-colors">Home</a>
-              <a href="#services" className="hover:text-pharm-700 transition-colors">Our Ethos</a>
-              <a href="#products" className="hover:text-pharm-700 transition-colors">Live Products</a>
-              <a href="#about" className="hover:text-pharm-700 transition-colors">About Us</a>
-              <a href="#faq" className="hover:text-pharm-700 transition-colors">FAQs</a>
-              <a href="#contact" className="hover:text-pharm-700 transition-colors">Contact</a>
+            <nav className="hidden md:flex items-center space-x-8 font-semibold text-biotech-300/80">
+              <a href="#hero" className="hover:text-white transition-colors">Home</a>
+              <a href="#services" className="hover:text-white transition-colors">Ethos</a>
+              <a href="#products" className="hover:text-white transition-colors">Catalog</a>
+              <a href="#about" className="hover:text-white transition-colors">About</a>
+              <a href="#faq" className="hover:text-white transition-colors">FAQs</a>
+              <a href="#contact" className="hover:text-white transition-colors">Inquire</a>
               
               {/* Only displays if pharmacist is logged in */}
               {user && (
                 <button
                   onClick={() => setIsDashboardActive(true)}
-                  className="text-pharm-700 hover:text-pharm-900 font-bold flex items-center space-x-1 bg-pharm-50 px-3 py-1 rounded-lg animate-pulse"
+                  className="text-white hover:text-biotech-300 font-black flex items-center space-x-1.5 bg-biotech-950 border border-biotech-500/40 px-3.5 py-1 rounded-xl shadow-glow-green-sm animate-pulse"
                 >
-                  <Grid className="w-4 h-4" />
+                  <Grid className="w-4.5 h-4.5" />
                   <span>Dashboard</span>
                 </button>
               )}
@@ -825,12 +847,12 @@ export default function App() {
                     setIsAuthViewOpen(true)
                   }
                 }}
-                className="flex items-center space-x-1.5 px-4 h-11 border border-pharm-200 rounded-full text-sm font-semibold text-pharm-700 hover:bg-pharm-50 transition-all shadow-sm"
+                className="flex items-center space-x-1.5 px-4 h-11 border border-biotech-900 hover:border-biotech-400/30 rounded-full text-sm font-semibold text-biotech-300 hover:text-white transition-all shadow-sm bg-biotech-950/20"
               >
-                <Lock className="w-4 h-4" />
-                <span>{user ? 'Staff Panel' : 'Pharmacist Login'}</span>
+                <Lock className="w-4 h-4 text-biotech-400" />
+                <span>{user ? 'Staff Portal' : 'Pharmacist Login'}</span>
                 {!user && submissions.filter(s => s.status === 'Unread').length > 0 && (
-                  <span className="bg-emerald-500 text-white text-[10px] w-5 h-5 flex items-center justify-center rounded-full font-bold animate-pulse">
+                  <span className="bg-emerald-500 text-slate-950 text-[10px] w-5 h-5 flex items-center justify-center rounded-full font-bold animate-pulse">
                     {submissions.filter(s => s.status === 'Unread').length}
                   </span>
                 )}
@@ -838,9 +860,9 @@ export default function App() {
 
               <a
                 href="#products"
-                className="flex items-center justify-center px-5 h-11 bg-pharm-600 text-white rounded-full text-sm font-bold shadow-md hover:bg-pharm-700 active:scale-95 transition-all"
+                className="flex items-center justify-center px-5 h-11 bg-biotech-600 hover:bg-biotech-500 text-slate-950 rounded-full text-sm font-extrabold shadow hover:shadow-glow-green active:scale-95 transition-all"
               >
-                Shop Natural
+                Explore Molecules
               </a>
             </div>
 
@@ -854,19 +876,19 @@ export default function App() {
                     setIsAuthViewOpen(true)
                   }
                 }}
-                className="relative p-2 text-pharm-700 hover:bg-pharm-50 rounded-full"
+                className="relative p-2 text-biotech-400 hover:text-white"
                 title="Staff Portal"
               >
                 <Lock className="w-5 h-5" />
                 {!user && submissions.filter(s => s.status === 'Unread').length > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-emerald-500 text-white text-[9px] w-4 h-4 flex items-center justify-center rounded-full font-bold">
+                  <span className="absolute -top-1 -right-1 bg-emerald-500 text-slate-950 text-[9px] w-4 h-4 flex items-center justify-center rounded-full font-bold">
                     {submissions.filter(s => s.status === 'Unread').length}
                   </span>
                 )}
               </button>
               <button
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                className="p-2 rounded-full text-pharm-800 hover:bg-pharm-50 focus:outline-none"
+                className="p-2 text-biotech-300 hover:text-white focus:outline-none"
               >
                 <Menu className="w-6 h-6" />
               </button>
@@ -876,19 +898,19 @@ export default function App() {
 
         {/* Mobile Nav Dropdown */}
         {isMobileMenuOpen && (
-          <div className="md:hidden bg-white/95 border-b border-pharm-100/50 backdrop-blur-lg animate-fadeIn">
+          <div className="md:hidden bg-[#030904]/95 border-b border-biotech-900/50 backdrop-blur-lg animate-fadeIn text-left">
             <div className="px-4 pt-2 pb-6 space-y-3">
-              <a href="#hero" onClick={() => setIsMobileMenuOpen(false)} className="block px-3 py-2 rounded-lg text-base font-semibold hover:bg-pharm-50 text-pharm-950">Home</a>
-              <a href="#services" onClick={() => setIsMobileMenuOpen(false)} className="block px-3 py-2 rounded-lg text-base font-semibold hover:bg-pharm-50 text-pharm-950">Our Ethos</a>
-              <a href="#products" onClick={() => setIsMobileMenuOpen(false)} className="block px-3 py-2 rounded-lg text-base font-semibold hover:bg-pharm-50 text-pharm-950">Live Products</a>
-              <a href="#about" onClick={() => setIsMobileMenuOpen(false)} className="block px-3 py-2 rounded-lg text-base font-semibold hover:bg-pharm-50 text-pharm-950">About Us</a>
-              <a href="#faq" onClick={() => setIsMobileMenuOpen(false)} className="block px-3 py-2 rounded-lg text-base font-semibold hover:bg-pharm-50 text-pharm-950">FAQs</a>
-              <a href="#contact" onClick={() => setIsMobileMenuOpen(false)} className="block px-3 py-2 rounded-lg text-base font-semibold hover:bg-pharm-50 text-pharm-950">Contact</a>
+              <a href="#hero" onClick={() => setIsMobileMenuOpen(false)} className="block px-3 py-2 rounded-lg text-base font-semibold text-biotech-300 hover:bg-biotech-950/50 hover:text-white">Home</a>
+              <a href="#services" onClick={() => setIsMobileMenuOpen(false)} className="block px-3 py-2 rounded-lg text-base font-semibold text-biotech-300 hover:bg-biotech-950/50 hover:text-white">Ethos</a>
+              <a href="#products" onClick={() => setIsMobileMenuOpen(false)} className="block px-3 py-2 rounded-lg text-base font-semibold text-biotech-300 hover:bg-biotech-950/50 hover:text-white">Catalog</a>
+              <a href="#about" onClick={() => setIsMobileMenuOpen(false)} className="block px-3 py-2 rounded-lg text-base font-semibold text-biotech-300 hover:bg-biotech-950/50 hover:text-white">About</a>
+              <a href="#faq" onClick={() => setIsMobileMenuOpen(false)} className="block px-3 py-2 rounded-lg text-base font-semibold text-biotech-300 hover:bg-biotech-950/50 hover:text-white">FAQs</a>
+              <a href="#contact" onClick={() => setIsMobileMenuOpen(false)} className="block px-3 py-2 rounded-lg text-base font-semibold text-biotech-300 hover:bg-biotech-950/50 hover:text-white">Inquire</a>
               
               {user && (
                 <button
                   onClick={() => { setIsMobileMenuOpen(false); setIsDashboardActive(true); }}
-                  className="w-full text-left px-3 py-2 rounded-lg text-base font-bold text-pharm-800 bg-pharm-50"
+                  className="w-full text-left px-3 py-2 rounded-lg text-base font-bold text-white bg-biotech-950 border border-biotech-900"
                 >
                   Go to Dashboard
                 </button>
@@ -898,9 +920,9 @@ export default function App() {
                 <a
                   href="#products"
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className="w-full text-center block py-3 bg-pharm-600 text-white font-bold rounded-xl shadow-md hover:bg-pharm-700"
+                  className="w-full text-center block py-3 bg-biotech-600 text-[#020603] font-black rounded-xl"
                 >
-                  Shop Natural
+                  Explore Molecules
                 </a>
               </div>
             </div>
@@ -909,76 +931,76 @@ export default function App() {
       </header>
 
       {/* --- HERO SECTION --- */}
-      <section id="hero" className="relative min-h-[calc(100vh-80px)] flex items-center justify-start py-12 px-4 sm:px-6 lg:px-8 overflow-hidden z-10">
+      <section id="hero" className="relative min-h-[calc(100vh-80px)] flex items-center justify-start py-12 px-4 sm:px-6 lg:px-8 overflow-hidden z-10 text-left">
         <div className="max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-12">
           {/* Main Hero Copy */}
           <div className="lg:col-span-7 flex flex-col justify-center text-left space-y-6 md:space-y-8">
-            <div className="inline-flex items-center space-x-2 bg-pharm-100/80 border border-pharm-200/50 backdrop-blur-md px-4 py-1.5 rounded-full text-pharm-800 font-bold text-xs tracking-wider uppercase animate-float max-w-max">
+            <div className="inline-flex items-center space-x-2 bg-biotech-950/80 border border-biotech-500/30 backdrop-blur-md px-4 py-1.5 rounded-full text-biotech-300 font-bold text-xs tracking-wider uppercase animate-float max-w-max shadow-glow-green-sm">
               <span className="flex h-2.5 w-2.5 relative">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-biotech-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-biotech-400"></span>
               </span>
-              <span>🌿 Purely Sourced • Safely Delivered</span>
+              <span>🧬 ADVANCED BIO-PHARMACOLOGY</span>
             </div>
 
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-slate-900 tracking-tight leading-none">
-              A smarter, <span className="text-pharm-700 underline decoration-pharm-200 decoration-8 underline-offset-4">greener</span> pharmacy for modern life.
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black text-white tracking-tight leading-none">
+              Optimize your biology. <span className="text-transparent bg-clip-text bg-gradient-to-r from-biotech-400 to-emerald-300 underline decoration-biotech-400/40 decoration-8 underline-offset-4">Extend lifespan.</span>
             </h1>
 
-            <p className="text-lg text-slate-600 max-w-xl leading-relaxed">
-              Welcome to <strong className="text-pharm-950 font-bold">Central Pharm</strong>, where modern biological science converges with environmental sustainability. Explore certified plant-derived vitamins, sustainable organic formulations, and enjoy 24/7 registered pharmacist support.
+            <p className="text-lg text-slate-300 max-w-xl leading-relaxed">
+              Welcome to <strong className="text-white font-extrabold">Central Pharm</strong>, where clinical microbiology converges with molecular health optimization. Explore high-absorption vitamins, heavy-metal-free compounds, and 24/7 registered pharmacist support.
             </p>
 
             {/* Quick interactive search banner in Hero */}
-            <div className="p-1.5 bg-white/80 border border-pharm-100 rounded-2xl flex flex-col sm:flex-row items-center gap-2 max-w-lg shadow-lg shadow-pharm-100/30 backdrop-blur-md">
-              <div className="flex items-center space-x-3 w-full px-3 py-2 text-slate-400">
-                <Search className="w-5 h-5 text-pharm-600" />
+            <div className="p-1.5 bg-[#050f07]/80 border border-biotech-900 rounded-2xl flex flex-col sm:flex-row items-center gap-2 max-w-lg shadow-2xl backdrop-blur-md">
+              <div className="flex items-center space-x-3 w-full px-3 py-2 text-slate-500">
+                <Search className="w-5 h-5 text-biotech-400" />
                 <input
                   type="text"
-                  placeholder="Quick search (e.g. Omega-3, B12, Collagen...)"
+                  placeholder="Query molecular structures (e.g. NMN, Omega-3, D3...)"
                   value={searchQuery}
                   onChange={(e) => {
                     setSearchQuery(e.target.value)
                     const section = document.getElementById('products')
                     if (section) section.scrollIntoView({ behavior: 'smooth' })
                   }}
-                  className="bg-transparent border-0 text-slate-800 focus:outline-none focus:ring-0 placeholder-slate-400 text-sm w-full"
+                  className="bg-transparent border-0 text-white focus:outline-none focus:ring-0 placeholder-slate-600 text-sm w-full"
                 />
               </div>
               <a
                 href="#products"
-                className="w-full sm:w-auto flex h-12 px-6 items-center justify-center bg-pharm-600 hover:bg-pharm-700 text-white font-bold rounded-xl whitespace-nowrap transition-all shadow-md hover:translate-x-1"
+                className="w-full sm:w-auto flex h-12 px-6 items-center justify-center bg-biotech-600 hover:bg-biotech-500 text-[#020603] font-black rounded-xl whitespace-nowrap transition-all shadow hover:translate-x-1"
               >
-                Find Now
+                Search Index
               </a>
             </div>
 
             {/* Hero Stats */}
-            <div className="grid grid-cols-3 gap-4 pt-4 max-w-md border-t border-pharm-100/50">
+            <div className="grid grid-cols-3 gap-4 pt-4 max-w-md border-t border-biotech-900/60">
               <div>
-                <span className="block text-2xl font-extrabold text-pharm-900">100%</span>
-                <span className="block text-xs font-medium text-slate-500">Plant-Based / Vegan</span>
+                <span className="block text-2xl font-black text-white">99.8%</span>
+                <span className="block text-xs font-semibold text-biotech-400">Certified Purity</span>
               </div>
               <div>
-                <span className="block text-2xl font-extrabold text-pharm-900">Zero</span>
-                <span className="block text-xs font-medium text-slate-500">Plastic Waste</span>
+                <span className="block text-2xl font-black text-white">Zero</span>
+                <span className="block text-xs font-semibold text-biotech-400">Synthetic Fillers</span>
               </div>
               <div>
-                <span className="block text-2xl font-extrabold text-pharm-900">24/7</span>
-                <span className="block text-xs font-medium text-slate-500">Active Support</span>
+                <span className="block text-2xl font-black text-white">24/7</span>
+                <span className="block text-xs font-semibold text-biotech-400">Active Support</span>
               </div>
             </div>
           </div>
 
           {/* Interactive floating model helper tag in Desktop */}
           <div className="hidden lg:col-span-5 lg:flex flex-col justify-end items-end space-y-4">
-            <div className="bg-white/80 border border-pharm-100 p-4 rounded-2xl shadow-xl shadow-pharm-100/10 backdrop-blur-md max-w-[280px] pointer-events-auto transform hover:-translate-y-2 transition-transform duration-300">
-              <div className="flex items-center space-x-2 text-pharm-700 font-bold mb-1">
-                <Info className="w-5 h-5 text-pharm-500" />
+            <div className="bg-[#050f07]/80 border border-biotech-900 p-4 rounded-2xl shadow-2xl backdrop-blur-md max-w-[280px] pointer-events-auto transform hover:-translate-y-2 transition-transform duration-300">
+              <div className="flex items-center space-x-2 text-biotech-400 font-bold mb-1">
+                <Info className="w-5 h-5" />
                 <span className="text-sm">Interactive 3D Art</span>
               </div>
-              <p className="text-xs text-slate-600 leading-relaxed">
-                Scroll the webpage to see the DNA strand and molecular elements re-align. Feel free to drag or move around!
+              <p className="text-xs text-slate-400 leading-relaxed">
+                Scroll the webpage to see the DNA helix and molecular compounds align. Move your mouse to tilt the camera.
               </p>
             </div>
           </div>
@@ -986,16 +1008,16 @@ export default function App() {
       </section>
 
       {/* --- SERVICES / ETHOS SECTION --- */}
-      <section id="services" className="relative py-24 px-4 sm:px-6 lg:px-8 bg-[#ebf6ee]/80 border-y border-pharm-100/50 backdrop-blur-sm z-10">
+      <section id="services" className="relative py-24 px-4 sm:px-6 lg:px-8 bg-[#040e06]/80 border-y border-biotech-900/60 backdrop-blur-sm z-10 text-left">
         <div className="max-w-7xl mx-auto">
           {/* Section title */}
           <div className="text-center max-w-3xl mx-auto space-y-4 mb-16">
-            <h2 className="text-xs font-bold uppercase tracking-widest text-pharm-700">Healthy Life, Healthy Planet</h2>
-            <p className="text-3xl sm:text-4xl font-extrabold text-slate-900">
-              A healthcare philosophy built on environmental harmony.
+            <h2 className="text-xs font-bold uppercase tracking-widest text-biotech-400">Biological Integrity</h2>
+            <p className="text-3xl sm:text-4xl font-extrabold text-white">
+              Advanced Clinical Diagnostics & Formulation
             </p>
-            <p className="text-slate-600">
-              Traditional pharmacies output millions of tons of plastic and toxic pharmaceutical run-off yearly. We built Central Pharm to do things completely differently.
+            <p className="text-slate-400 leading-relaxed">
+              Standard pharmacies output millions of tons of synthetic chemical binders and microplastics. Central Pharm is designed with molecular-level biological integrity.
             </p>
           </div>
 
@@ -1004,21 +1026,21 @@ export default function App() {
             {services.map((srv) => (
               <div
                 key={srv.id}
-                className="bg-white/90 border border-pharm-100 rounded-3xl p-6 shadow-lg shadow-pharm-100/20 hover:shadow-xl hover:shadow-pharm-100/40 transform hover:-translate-y-1.5 transition-all duration-300 flex flex-col justify-between"
+                className="bg-[#051107]/90 border border-biotech-900 rounded-3xl p-6 shadow-xl hover:border-biotech-500/30 transform hover:-translate-y-1.5 transition-all duration-300 flex flex-col justify-between"
               >
                 <div className="space-y-4">
-                  <div className="bg-pharm-50 text-pharm-700 p-4 rounded-2xl inline-block shadow-inner">
+                  <div className="bg-biotech-950 text-biotech-400 p-4 rounded-2xl inline-block border border-biotech-900 shadow-inner">
                     <ServiceIcon name={srv.icon} className="w-8 h-8" />
                   </div>
-                  <h3 className="text-xl font-bold text-slate-900">{srv.title}</h3>
-                  <p className="text-slate-600 text-sm leading-relaxed">{srv.description}</p>
+                  <h3 className="text-xl font-bold text-white">{srv.title}</h3>
+                  <p className="text-slate-400 text-sm leading-relaxed">{srv.description}</p>
                 </div>
                 
-                <div className="mt-6 pt-4 border-t border-pharm-50 flex items-center justify-between text-xs font-bold text-pharm-700">
+                <div className="mt-6 pt-4 border-t border-biotech-900/40 flex items-center justify-between text-xs font-bold text-biotech-400">
                   <span>{srv.benefit}</span>
                   {srv.id === 'serv-1' && (
-                    <span className="flex items-center space-x-1 bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full text-[10px] animate-pulse">
-                      <span>●</span> <span>ONLINE</span>
+                    <span className="flex items-center space-x-1 bg-biotech-950 border border-biotech-500/40 text-biotech-400 px-2.5 py-0.5 rounded-full text-[10px] animate-pulse">
+                      <span>●</span> <span>MONITORING ACTIVE</span>
                     </span>
                   )}
                 </div>
@@ -1029,30 +1051,30 @@ export default function App() {
       </section>
 
       {/* --- PRODUCT HIGHLIGHTS & LIVE SEARCH --- */}
-      <section id="products" className="relative py-24 px-4 sm:px-6 lg:px-8 bg-white/20 backdrop-blur-sm z-10">
+      <section id="products" className="relative py-24 px-4 sm:px-6 lg:px-8 bg-[#020603]/30 backdrop-blur-sm z-10 text-left">
         <div className="max-w-7xl mx-auto">
           {/* Header */}
           <div className="flex flex-col md:flex-row md:items-end md:justify-between mb-12 gap-6">
             <div className="space-y-3">
-              <h2 className="text-xs font-bold uppercase tracking-widest text-pharm-700">Explore Catalog</h2>
-              <p className="text-3xl sm:text-4xl font-extrabold text-slate-900">
-                Premium Natural Apothecary
+              <h2 className="text-xs font-bold uppercase tracking-widest text-biotech-400">Diagnostics Index</h2>
+              <p className="text-3xl sm:text-4xl font-extrabold text-white">
+                Biotech Longevity Repository
               </p>
-              <p className="text-slate-600 max-w-xl">
-                Search, filter, and review our live database of ethically harvested medicines, whole-food supplements, and lichen-sourced vitamins.
+              <p className="text-slate-400 max-w-xl leading-relaxed">
+                Query, filter, and inspect our live directory of ethically formulated active compounds, telomere catalysts, and brain probiotics.
               </p>
             </div>
 
             {/* Filter Tabs */}
-            <div className="flex flex-wrap gap-2 p-1.5 bg-pharm-100/80 rounded-2xl max-w-max border border-pharm-200/50 backdrop-blur-md">
+            <div className="flex flex-wrap gap-2 p-1.5 bg-[#050f07] rounded-2xl max-w-max border border-biotech-900">
               {['All', 'Medicines', 'Supplements', 'Vitamins'].map((cat) => (
                 <button
                   key={cat}
                   onClick={() => setSelectedCategory(cat)}
                   className={`px-5 py-2.5 rounded-xl text-xs font-bold transition-all ${
                     selectedCategory === cat
-                      ? 'bg-white text-pharm-900 shadow-md scale-102'
-                      : 'text-pharm-700 hover:text-pharm-950'
+                      ? 'bg-biotech-950 border border-biotech-500/50 text-white shadow-glow-green-sm'
+                      : 'text-biotech-400 hover:text-white'
                   }`}
                 >
                   {cat}
@@ -1064,19 +1086,19 @@ export default function App() {
           {/* Search bar input */}
           <div className="mb-10 max-w-xl relative">
             <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
-              <Search className="h-5 w-5 text-pharm-600" />
+              <Search className="h-5 w-5 text-biotech-400" />
             </div>
             <input
               type="text"
-              placeholder="Search products by ingredients, name, benefit..."
+              placeholder="Filter by chemical features, active compounds..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-12 pr-10 py-4 bg-white/90 border border-pharm-200 rounded-2xl text-slate-900 focus:ring-4 focus:ring-pharm-100 focus:border-pharm-500 transition-all outline-none shadow-sm shadow-pharm-100/30 font-medium"
+              className="w-full pl-12 pr-10 py-4 bg-[#050f07]/90 border border-biotech-900 rounded-2xl text-white focus:ring-4 focus:ring-biotech-950 focus:border-biotech-400 transition-all outline-none font-medium"
             />
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery('')}
-                className="absolute inset-y-0 right-4 flex items-center text-slate-400 hover:text-slate-600"
+                className="absolute inset-y-0 right-4 flex items-center text-slate-500 hover:text-white"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -1085,52 +1107,52 @@ export default function App() {
 
           {/* Products Grid */}
           {filteredProducts.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
               {filteredProducts.map((product) => (
                 <div
                   key={product.id}
                   onClick={() => setSelectedProduct(product)}
-                  className="group bg-white/90 border border-pharm-100 rounded-3xl p-5 shadow-lg shadow-pharm-100/10 hover:shadow-2xl hover:shadow-pharm-100/30 transform hover:-translate-y-1 cursor-pointer transition-all duration-300 flex flex-col justify-between"
+                  className="group bg-[#051107]/90 border border-biotech-900 rounded-3xl p-6 shadow-2xl hover:border-biotech-400/40 transform hover:-translate-y-1 cursor-pointer transition-all duration-300 flex flex-col justify-between"
                 >
                   <div>
                     {/* Badge and Rating */}
                     <div className="flex items-center justify-between mb-4">
-                      <span className="bg-pharm-100 text-pharm-800 text-[10px] font-extrabold px-3 py-1 rounded-full uppercase tracking-wider">
+                      <span className="bg-biotech-950 border border-biotech-900 text-biotech-300 text-[10px] font-extrabold px-3 py-1 rounded-full uppercase tracking-wider">
                         {product.badge}
                       </span>
-                      <span className="flex items-center text-amber-500 font-extrabold text-xs bg-amber-50 px-2 py-0.5 rounded-full">
-                        <Star className="w-3.5 h-3.5 fill-amber-500 stroke-amber-500 mr-1" />
+                      <span className="flex items-center text-amber-400 font-extrabold text-xs bg-amber-950/20 px-2 py-0.5 rounded-full border border-amber-900/30">
+                        <Star className="w-3.5 h-3.5 fill-amber-400 stroke-amber-400 mr-1" />
                         {product.rating}
                       </span>
                     </div>
 
                     {/* Product visual mock */}
-                    <div className="aspect-square bg-pharm-50/80 rounded-2xl flex items-center justify-center text-6xl group-hover:scale-105 transition-transform duration-300 relative overflow-hidden shadow-inner mb-4">
+                    <div className="aspect-video bg-[#020603] rounded-2xl flex items-center justify-center text-5xl group-hover:scale-102 border border-biotech-900/50 transition-all duration-300 relative overflow-hidden shadow-inner mb-4">
                       <span>{product.icon}</span>
-                      <div className="absolute inset-0 bg-gradient-to-t from-pharm-100/10 to-transparent"></div>
+                      <div className="absolute inset-0 bg-gradient-to-t from-biotech-950/40 to-transparent"></div>
                     </div>
 
                     {/* Name & Category */}
-                    <span className="text-[10px] uppercase tracking-widest font-bold text-pharm-600 block mb-1">
+                    <span className="text-[10px] uppercase tracking-widest font-bold text-biotech-400 block mb-1">
                       {product.category}
                     </span>
-                    <h3 className="text-lg font-bold text-slate-900 group-hover:text-pharm-700 transition-colors line-clamp-1">
+                    <h3 className="text-xl font-bold text-white group-hover:text-biotech-400 transition-colors line-clamp-1">
                       {product.name}
                     </h3>
-                    <p className="text-slate-500 text-xs mt-1 line-clamp-2 leading-relaxed">
+                    <p className="text-slate-400 text-sm mt-2 line-clamp-2 leading-relaxed">
                       {product.description}
                     </p>
                   </div>
 
-                  <div className="mt-5 pt-4 border-t border-pharm-50/50 flex items-center justify-between">
+                  <div className="mt-6 pt-4 border-t border-biotech-900/40 flex items-center justify-between">
                     <div>
-                      <span className="text-[10px] font-bold text-slate-400 block uppercase">Price</span>
-                      <span className="text-xl font-black text-slate-950">${product.price.toFixed(2)}</span>
+                      <span className="text-[10px] font-bold text-biotech-400 block uppercase tracking-wider">Active Cost</span>
+                      <span className="text-xl font-black text-white">${product.price.toFixed(2)}</span>
                     </div>
                     <button
-                      className="px-4 py-2 bg-pharm-50 hover:bg-pharm-100 text-pharm-800 text-xs font-bold rounded-xl transition-colors flex items-center space-x-1.5"
+                      className="px-4.5 py-2.5 bg-biotech-950 border border-biotech-900 text-biotech-300 hover:text-white text-xs font-bold rounded-xl transition-colors flex items-center space-x-1.5"
                     >
-                      <span>Explore</span>
+                      <span>Analyze</span>
                       <ArrowRight className="w-3.5 h-3.5" />
                     </button>
                   </div>
@@ -1138,97 +1160,97 @@ export default function App() {
               ))}
             </div>
           ) : (
-            <div className="bg-white/85 border border-pharm-100 p-12 rounded-3xl text-center max-w-xl mx-auto shadow-md">
-              <div className="bg-pharm-100/50 text-pharm-800 p-4 rounded-full inline-block mb-4">
-                <AlertCircle className="w-10 h-10" />
+            <div className="bg-[#050f07] border border-biotech-900 p-12 rounded-3xl text-center max-w-xl mx-auto">
+              <div className="bg-biotech-950 text-biotech-400 p-4 rounded-full inline-block mb-4 border border-biotech-900">
+                <AlertCircle className="w-10 h-10 animate-pulseGlow" />
               </div>
-              <h3 className="text-xl font-bold text-slate-900 mb-2">No matching products found</h3>
-              <p className="text-slate-600 text-sm">
-                We couldn't find any products in "{selectedCategory}" matching your query: <strong className="text-pharm-950">"{searchQuery}"</strong>. Please try searching generic terms like 'relief', 'extract', or 'vegan'.
+              <h3 className="text-xl font-bold text-white mb-2">Molecular index empty</h3>
+              <p className="text-slate-400 text-sm">
+                No active formulas found for category "{selectedCategory}" matching: <strong className="text-biotech-300">"{searchQuery}"</strong>. Try checking 'B12', 'silver', or 'peptide'.
               </p>
               <button
                 onClick={() => { setSearchQuery(''); setSelectedCategory('All'); }}
-                className="mt-6 px-5 py-2.5 bg-pharm-600 text-white font-bold rounded-xl text-xs hover:bg-pharm-700 transition-colors"
+                className="mt-6 px-5 py-2.5 bg-biotech-600 text-slate-950 font-bold rounded-xl text-xs hover:bg-biotech-500 transition-all"
               >
-                Clear all filters
+                Reset Search Index
               </button>
             </div>
           )}
         </div>
       </section>
 
-      {/* --- ABOUT US / ETHICS EXPLAINER --- */}
-      <section id="about" className="relative py-24 px-4 sm:px-6 lg:px-8 bg-[#ebf6ee]/90 border-y border-pharm-100/50 backdrop-blur-md z-10">
+      {/* --- ABOUT US / CLINICAL STORY --- */}
+      <section id="about" className="relative py-24 px-4 sm:px-6 lg:px-8 bg-[#040e06]/90 border-y border-biotech-900/60 backdrop-blur-md z-10 text-left">
         <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-16 items-center">
           
           {/* Static imagery represent */}
           <div className="lg:col-span-5 space-y-6">
-            <div className="bg-white p-8 rounded-3xl shadow-xl shadow-pharm-100/30 border border-pharm-100 space-y-6">
-              <span className="text-xs font-bold uppercase tracking-widest text-pharm-600 block">Eco-Certifications</span>
+            <div className="bg-[#020603] p-8 rounded-3xl shadow-2xl border border-biotech-900 space-y-6">
+              <span className="text-xs font-extrabold uppercase tracking-widest text-biotech-400 block">Laboratory Standards</span>
               
               <div className="space-y-4">
                 <div className="flex items-start space-x-4">
-                  <div className="p-2 bg-emerald-100 text-emerald-800 rounded-xl mt-1">
+                  <div className="p-2 bg-biotech-950 text-biotech-400 border border-biotech-900 rounded-xl mt-1">
                     <ShieldCheck className="w-5 h-5" />
                   </div>
                   <div>
-                    <h4 className="font-bold text-slate-900">Registered Pharmacy Practice</h4>
-                    <p className="text-slate-500 text-xs mt-0.5">Accredited by the State Council on Bio-Medicinal standards.</p>
+                    <h4 className="font-bold text-white text-sm">Clinical Molecular Practice</h4>
+                    <p className="text-slate-400 text-xs mt-0.5">Fully accredited by the Board of Advanced Pharmacological Standards.</p>
                   </div>
                 </div>
 
                 <div className="flex items-start space-x-4">
-                  <div className="p-2 bg-emerald-100 text-emerald-800 rounded-xl mt-1">
+                  <div className="p-2 bg-biotech-950 text-biotech-400 border border-biotech-900 rounded-xl mt-1">
                     <Leaf className="w-5 h-5" />
                   </div>
                   <div>
-                    <h4 className="font-bold text-slate-900">Green Business Gold Certified</h4>
-                    <p className="text-slate-500 text-xs mt-0.5">Operating with 100% compostable packaging and zero landfill goals.</p>
+                    <h4 className="font-bold text-white text-sm">Ultra-Pure Sourcing</h4>
+                    <p className="text-slate-400 text-xs mt-0.5">Operating under heavy-metal-free protocols, yielding 99.8% pure assays.</p>
                   </div>
                 </div>
 
                 <div className="flex items-start space-x-4">
-                  <div className="p-2 bg-emerald-100 text-emerald-800 rounded-xl mt-1">
+                  <div className="p-2 bg-biotech-950 text-biotech-400 border border-biotech-900 rounded-xl mt-1">
                     <Truck className="w-5 h-5" />
                   </div>
                   <div>
-                    <h4 className="font-bold text-slate-900">Carbon-Neutral Deliveries</h4>
-                    <p className="text-slate-500 text-xs mt-0.5">Using localized electric bicycle networks for fast home drop-offs.</p>
+                    <h4 className="font-bold text-white text-sm">Thermal Locked Logistics</h4>
+                    <p className="text-slate-400 text-xs mt-0.5">Active molecular formulations are locked in temperature-controlled pods.</p>
                   </div>
                 </div>
               </div>
 
-              <div className="bg-pharm-50 border border-pharm-100 p-4 rounded-2xl flex items-center space-x-3 text-xs text-pharm-800 leading-relaxed">
-                <span>🍀</span>
-                <p>We plant one native tree for every five orders placed at our apothecary. Over 4,200 planted already.</p>
+              <div className="bg-[#051107] border border-biotech-900 p-4 rounded-2xl flex items-center space-x-3 text-xs text-biotech-300 leading-relaxed">
+                <span>⚡</span>
+                <p>We leverage high-performance liquid chromatography (HPLC) to verify active molecule counts in every batch.</p>
               </div>
             </div>
           </div>
 
           {/* Story Narrative */}
-          <div className="lg:col-span-7 space-y-6 text-left">
-            <h2 className="text-xs font-bold uppercase tracking-widest text-pharm-700">About Central Pharm</h2>
-            <p className="text-3xl sm:text-4xl font-extrabold text-slate-900 leading-tight">
-              Pioneering cellular health and planetary restoration.
+          <div className="lg:col-span-7 space-y-6">
+            <h2 className="text-xs font-bold uppercase tracking-widest text-biotech-400">About Central Pharm</h2>
+            <p className="text-3xl sm:text-4xl font-extrabold text-white leading-tight">
+              Pioneering custom bio-compounding and cellular longevity.
             </p>
-            <p className="text-slate-600 leading-relaxed">
-              Founded in 2024, Central Pharm emerged from a simple question: <em>Why can't health products heal the patient and the ecosystem at once?</em> Our founders—a environmental toxicologist and a formulation chemist—reimagined the community apothecary from scratch.
+            <p className="text-slate-400 leading-relaxed">
+              Founded in 2024, Central Pharm emerged from a group of environmental toxicologists and compound formulation chemists who set out to reinvent the standard pharmacy model.
             </p>
-            <p className="text-slate-600 leading-relaxed">
-              We vet every supplier to guarantee ethical harvesting practices that avoid destructive monoculture. Inside our laboratories, we substitute synthetic fillers (like silicon dioxide, microcrystalline cellulose, or gelatin) with premium, plant-based hypoallergenic compounds. 
+            <p className="text-slate-400 leading-relaxed">
+              We operate state-of-the-art bio-compounding laboratories where we tailor molecular compounds directly for your biological requirements, using exclusively hypoallergenic plant carriers and eliminating synthetic binding excipients completely.
             </p>
-            <div className="pt-4 border-t border-pharm-100 flex flex-col sm:flex-row gap-6">
+            <div className="pt-4 border-t border-biotech-900/40 flex flex-col sm:flex-row gap-6">
               <div className="space-y-1">
-                <span className="block text-3xl font-extrabold text-pharm-900">4.9★</span>
-                <span className="block text-xs text-slate-500 font-medium">Over 20k Customer Reviews</span>
+                <span className="block text-3xl font-black text-white">99.8%</span>
+                <span className="block text-xs text-biotech-400 font-semibold uppercase tracking-wider">Molar Purity Assay</span>
               </div>
               <div className="space-y-1">
-                <span className="block text-3xl font-extrabold text-pharm-900">4.2k+</span>
-                <span className="block text-xs text-slate-500 font-medium">Native Trees Planted</span>
+                <span className="block text-3xl font-black text-white">Zero</span>
+                <span className="block text-xs text-biotech-400 font-semibold uppercase tracking-wider">Titanium Dioxide</span>
               </div>
               <div className="space-y-1">
-                <span className="block text-3xl font-extrabold text-pharm-900">Zero</span>
-                <span className="block text-xs text-slate-500 font-medium">Microplastic Trace Guarantee</span>
+                <span className="block text-3xl font-black text-white">24/7</span>
+                <span className="block text-xs text-biotech-400 font-semibold uppercase tracking-wider">Active Monitoring</span>
               </div>
             </div>
           </div>
@@ -1237,37 +1259,37 @@ export default function App() {
       </section>
 
       {/* --- TESTIMONIALS & FAQ --- */}
-      <section id="faq" className="relative py-24 px-4 sm:px-6 lg:px-8 bg-white/10 backdrop-blur-sm z-10">
+      <section id="faq" className="relative py-24 px-4 sm:px-6 lg:px-8 bg-[#020603]/30 backdrop-blur-sm z-10 text-left">
         <div className="max-w-7xl mx-auto space-y-24">
           
           {/* Testimonials */}
           <div>
             <div className="text-center max-w-2xl mx-auto space-y-3 mb-16">
-              <h2 className="text-xs font-bold uppercase tracking-widest text-pharm-700">Testimonials</h2>
-              <p className="text-3xl font-extrabold text-slate-900">Eco-conscious reviews</p>
+              <h2 className="text-xs font-bold uppercase tracking-widest text-biotech-400">Clinical Reviews</h2>
+              <p className="text-3xl font-extrabold text-white">Bio-Hacking Patient Testimonials</p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               {testimonials.map((test) => (
                 <div
                   key={test.id}
-                  className="bg-white/90 border border-pharm-100 p-8 rounded-3xl shadow-lg relative"
+                  className="bg-[#051107]/90 border border-biotech-900 p-8 rounded-3xl shadow-xl relative"
                 >
-                  <div className="absolute -top-5 left-8 text-3xl bg-pharm-100 w-11 h-11 flex items-center justify-center rounded-2xl shadow-md border border-pharm-200">
+                  <div className="absolute -top-5 left-8 text-3xl bg-[#020603] w-11 h-11 flex items-center justify-center rounded-2xl border border-biotech-900 shadow-glow-green-sm">
                     {test.avatar}
                   </div>
                   <div className="pt-4 space-y-4">
-                    <div className="flex space-x-1 text-amber-500">
+                    <div className="flex space-x-1 text-amber-400">
                       {[...Array(test.rating)].map((_, i) => (
                         <Star key={i} className="w-4 h-4 fill-amber-400 stroke-amber-400" />
                       ))}
                     </div>
-                    <p className="text-slate-600 text-sm italic leading-relaxed">
+                    <p className="text-slate-300 text-sm italic leading-relaxed">
                       "{test.quote}"
                     </p>
-                    <div className="pt-4 border-t border-pharm-50">
-                      <span className="block font-bold text-slate-900 text-sm">{test.name}</span>
-                      <span className="block text-xs text-pharm-600 font-semibold">{test.role}</span>
+                    <div className="pt-4 border-t border-biotech-900/40">
+                      <span className="block font-bold text-white text-sm">{test.name}</span>
+                      <span className="block text-xs text-biotech-400 font-semibold uppercase tracking-wider mt-0.5">{test.role}</span>
                     </div>
                   </div>
                 </div>
@@ -1278,8 +1300,8 @@ export default function App() {
           {/* FAQs Accordion */}
           <div>
             <div className="text-center max-w-2xl mx-auto space-y-3 mb-16">
-              <h2 className="text-xs font-bold uppercase tracking-widest text-pharm-700">Patient Resources</h2>
-              <p className="text-3xl font-extrabold text-slate-900">Frequently Asked Questions</p>
+              <h2 className="text-xs font-bold uppercase tracking-widest text-biotech-400">Patient Resources</h2>
+              <p className="text-3xl font-extrabold text-white">Frequently Asked Questions</p>
             </div>
 
             <div className="max-w-3xl mx-auto space-y-4">
@@ -1288,15 +1310,15 @@ export default function App() {
                 return (
                   <div
                     key={faq.id}
-                    className="bg-white/95 border border-pharm-100 rounded-2xl overflow-hidden shadow-sm hover:shadow transition-all duration-300"
+                    className="bg-[#051107]/90 border border-biotech-900 rounded-2xl overflow-hidden shadow"
                   >
                     <button
                       onClick={() => setOpenFaq(isOpen ? null : idx)}
                       className="w-full flex items-center justify-between p-6 text-left focus:outline-none"
                     >
-                      <span className="font-bold text-slate-900 pr-4">{faq.question}</span>
+                      <span className="font-bold text-white pr-4">{faq.question}</span>
                       <ChevronDown
-                        className={`w-5 h-5 text-pharm-600 transition-transform duration-300 flex-shrink-0 ${
+                        className={`w-5 h-5 text-biotech-400 transition-transform duration-300 flex-shrink-0 ${
                           isOpen ? 'transform rotate-180' : ''
                         }`}
                       />
@@ -1304,10 +1326,10 @@ export default function App() {
                     
                     <div
                       className={`transition-all duration-300 ease-in-out overflow-hidden ${
-                        isOpen ? 'max-h-60 border-t border-pharm-50' : 'max-h-0'
+                        isOpen ? 'max-h-60 border-t border-biotech-900/40' : 'max-h-0'
                       }`}
                     >
-                      <p className="p-6 text-sm text-slate-600 leading-relaxed bg-pharm-50/30">
+                      <p className="p-6 text-sm text-slate-300 leading-relaxed bg-[#020603]/80">
                         {faq.answer}
                       </p>
                     </div>
@@ -1321,49 +1343,49 @@ export default function App() {
       </section>
 
       {/* --- CONTACT FORM --- */}
-      <section id="contact" className="relative py-24 px-4 sm:px-6 lg:px-8 bg-[#ebf6ee]/80 border-t border-pharm-100/50 backdrop-blur-md z-10">
+      <section id="contact" className="relative py-24 px-4 sm:px-6 lg:px-8 bg-[#040e06]/85 border-t border-biotech-900/60 backdrop-blur-md z-10 text-left">
         <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-16">
           
           {/* Sidebar copy */}
-          <div className="lg:col-span-5 space-y-8 text-left flex flex-col justify-center">
+          <div className="lg:col-span-5 space-y-8 flex flex-col justify-center">
             <div className="space-y-4">
-              <h2 className="text-xs font-bold uppercase tracking-widest text-pharm-700">Get In Touch</h2>
-              <p className="text-3xl sm:text-4xl font-extrabold text-slate-900 leading-tight">
-                Connect directly with our dispensary.
+              <h2 className="text-xs font-bold uppercase tracking-widest text-biotech-400">Molecular Portal</h2>
+              <p className="text-3xl sm:text-4xl font-extrabold text-white leading-tight">
+                Connect directly with our compounding dispensary.
               </p>
-              <p className="text-slate-600 leading-relaxed">
-                Need to transfer a prescription? Have questions about compounding allergen exclusions or raw organic ingredients? Submit the secure form, and a certified pharmacist will reply within two hours.
+              <p className="text-slate-400 leading-relaxed">
+                Need to transfer active clinical prescriptions? Or inquire about custom compounding with rice/potato hypoallergenic binders? Submit our secure, encrypted form and a molecular pharmacist will reply within 15 minutes.
               </p>
             </div>
 
-            <div className="space-y-4 font-semibold text-slate-700">
-              <div className="flex items-center space-x-4 bg-white/70 p-4 rounded-2xl shadow-sm border border-pharm-100">
-                <div className="bg-pharm-100 text-pharm-700 p-2.5 rounded-xl">
+            <div className="space-y-4 font-semibold text-slate-300">
+              <div className="flex items-center space-x-4 bg-[#020603]/60 p-4 rounded-2xl border border-biotech-900/50">
+                <div className="bg-biotech-950 text-biotech-400 p-2.5 rounded-xl border border-biotech-900">
                   <Phone className="w-5 h-5" />
                 </div>
                 <div>
-                  <span className="block text-[10px] text-slate-400 uppercase">Emergency Support</span>
-                  <span className="text-sm text-slate-900 font-extrabold">+1 (800) ECO-PHAR</span>
+                  <span className="block text-[10px] text-biotech-400 uppercase tracking-widest">Clinical Support</span>
+                  <span className="text-sm text-white font-extrabold">+1 (800) BIO-PHAR</span>
                 </div>
               </div>
 
-              <div className="flex items-center space-x-4 bg-white/70 p-4 rounded-2xl shadow-sm border border-pharm-100">
-                <div className="bg-pharm-100 text-pharm-700 p-2.5 rounded-xl">
+              <div className="flex items-center space-x-4 bg-[#020603]/60 p-4 rounded-2xl border border-biotech-900/50">
+                <div className="bg-biotech-950 text-biotech-400 p-2.5 rounded-xl border border-biotech-900">
                   <Mail className="w-5 h-5" />
                 </div>
                 <div>
-                  <span className="block text-[10px] text-slate-400 uppercase">Email Support</span>
-                  <span className="text-sm text-slate-900 font-extrabold">consult@centralpharm.com</span>
+                  <span className="block text-[10px] text-biotech-400 uppercase tracking-widest">Enrypted Dispatch</span>
+                  <span className="text-sm text-white font-extrabold">consult@centralpharm.com</span>
                 </div>
               </div>
 
-              <div className="flex items-center space-x-4 bg-white/70 p-4 rounded-2xl shadow-sm border border-pharm-100">
-                <div className="bg-pharm-100 text-pharm-700 p-2.5 rounded-xl">
+              <div className="flex items-center space-x-4 bg-[#020603]/60 p-4 rounded-2xl border border-biotech-900/50">
+                <div className="bg-biotech-950 text-biotech-400 p-2.5 rounded-xl border border-biotech-900">
                   <MapPin className="w-5 h-5" />
                 </div>
                 <div>
-                  <span className="block text-[10px] text-slate-400 uppercase">Physical Apothecary</span>
-                  <span className="text-sm text-slate-900 font-extrabold">802 Greenwoods Dr, Portland OR</span>
+                  <span className="block text-[10px] text-biotech-400 uppercase tracking-widest">Compounding Center</span>
+                  <span className="text-sm text-white font-extrabold">802 Tech Parkway, Portland OR</span>
                 </div>
               </div>
             </div>
@@ -1371,73 +1393,76 @@ export default function App() {
 
           {/* Form container */}
           <div className="lg:col-span-7">
-            <div className="bg-white p-8 sm:p-10 rounded-3xl shadow-xl shadow-pharm-100/20 border border-pharm-100 relative">
+            <div className="bg-[#051107] p-8 sm:p-10 rounded-3xl border border-biotech-900 relative">
               
               {formSubmitted && (
-                <div className="absolute inset-0 bg-white/95 rounded-3xl flex flex-col items-center justify-center text-center p-6 z-20 animate-fadeIn">
-                  <div className="bg-emerald-100 text-emerald-800 p-4 rounded-full mb-4">
+                <div className="absolute inset-0 bg-[#020603]/95 rounded-3xl flex flex-col items-center justify-center text-center p-6 z-20 animate-fadeIn">
+                  <div className="bg-biotech-950 text-biotech-400 border border-biotech-500/30 p-4 rounded-full mb-4 shadow-glow-green-sm">
                     <Check className="w-12 h-12 stroke-[3px]" />
                   </div>
-                  <h3 className="text-2xl font-extrabold text-slate-900 mb-2">Message Dispatched!</h3>
-                  <p className="text-slate-600 max-w-sm text-sm">
-                    Your transmission to Central Pharm was successful. A compounding pharmacist will analyze your query and contact you within 2 hours.
+                  <h3 className="text-2xl font-black text-white mb-2">Molecular Query Received!</h3>
+                  <p className="text-slate-400 max-w-sm text-sm">
+                    Your transmission to Central Pharm was encrypted successfully. A compounding pharmacist will analyze your chemical query and contact you within 15 minutes.
                   </p>
                   <button
                     onClick={() => setFormSubmitted(false)}
-                    className="mt-6 px-6 py-2.5 bg-pharm-600 text-white font-bold rounded-xl text-xs hover:bg-pharm-700 transition-colors"
+                    className="mt-6 px-6 py-2.5 bg-biotech-600 text-slate-950 font-black rounded-xl text-xs hover:bg-biotech-500 transition-all uppercase tracking-wider"
                   >
-                    Send another inquiry
+                    Send another query
                   </button>
                 </div>
               )}
 
-              <h3 className="text-xl font-bold text-slate-900 mb-6">Dispensary Inquiry Transmission</h3>
+              <h3 className="text-xl font-bold text-white mb-6 flex items-center space-x-2">
+                <span>Dispensary Query Transmission</span>
+                <span className="text-[9px] bg-biotech-950 border border-biotech-900 text-biotech-400 px-2 py-0.5 rounded-md uppercase font-black tracking-widest">SECURE SSL</span>
+              </h3>
               
               <form onSubmit={handleFormSubmit} className="space-y-5 text-left">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                   <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-slate-600 uppercase">Your Name *</label>
+                    <label className="text-[10px] font-extrabold text-biotech-300 uppercase tracking-widest">Your Name *</label>
                     <input
                       type="text"
                       required
                       placeholder="e.g. Dr. Arthur Vance"
                       value={formData.name}
                       onChange={(e) => setFormData({...formData, name: e.target.value})}
-                      className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-4 focus:ring-pharm-100 focus:bg-white focus:border-pharm-500 transition-all outline-none"
+                      className="w-full px-4 py-3 bg-[#020603] border border-biotech-900 rounded-xl text-sm focus:ring-4 focus:ring-biotech-950 focus:border-biotech-400 transition-all outline-none text-white placeholder-slate-700"
                     />
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-slate-600 uppercase">Email Address *</label>
+                    <label className="text-[10px] font-extrabold text-biotech-300 uppercase tracking-widest">Email Address *</label>
                     <input
                       type="email"
                       required
                       placeholder="e.g. arthur@wellness.org"
                       value={formData.email}
                       onChange={(e) => setFormData({...formData, email: e.target.value})}
-                      className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-4 focus:ring-pharm-100 focus:bg-white focus:border-pharm-500 transition-all outline-none"
+                      className="w-full px-4 py-3 bg-[#020603] border border-biotech-900 rounded-xl text-sm focus:ring-4 focus:ring-biotech-950 focus:border-biotech-400 transition-all outline-none text-white placeholder-slate-700"
                     />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                   <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-slate-600 uppercase">Phone (Optional)</label>
+                    <label className="text-[10px] font-extrabold text-biotech-300 uppercase tracking-widest">Phone (Optional)</label>
                     <input
                       type="tel"
                       placeholder="e.g. +1 (555) 304-4901"
                       value={formData.phone}
                       onChange={(e) => setFormData({...formData, phone: e.target.value})}
-                      className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-4 focus:ring-pharm-100 focus:bg-white focus:border-pharm-500 transition-all outline-none"
+                      className="w-full px-4 py-3 bg-[#020603] border border-biotech-900 rounded-xl text-sm focus:ring-4 focus:ring-biotech-950 focus:border-biotech-400 transition-all outline-none text-white placeholder-slate-700"
                     />
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-slate-600 uppercase">Subject Topic</label>
+                    <label className="text-[10px] font-extrabold text-biotech-300 uppercase tracking-widest">Subject Topic</label>
                     <select
                       value={formData.subject}
                       onChange={(e) => setFormData({...formData, subject: e.target.value})}
-                      className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-4 focus:ring-pharm-100 focus:bg-white focus:border-pharm-500 transition-all outline-none"
+                      className="w-full px-4 py-3 bg-[#020603] border border-biotech-900 rounded-xl text-sm focus:ring-4 focus:ring-biotech-950 focus:border-biotech-400 transition-all outline-none text-white bg-white"
                     >
                       <option value="General Inquiry">General Inquiry</option>
                       <option value="Prescription Transfer">Prescription Transfer</option>
@@ -1448,23 +1473,23 @@ export default function App() {
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-slate-600 uppercase">Your Message *</label>
+                  <label className="text-[10px] font-extrabold text-biotech-300 uppercase tracking-widest">Your Message *</label>
                   <textarea
                     rows={4}
                     required
-                    placeholder="Describe your compounding request or prescription details..."
+                    placeholder="Describe your active compound query or compounding recipe instructions..."
                     value={formData.message}
                     onChange={(e) => setFormData({...formData, message: e.target.value})}
-                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-4 focus:ring-pharm-100 focus:bg-white focus:border-pharm-500 transition-all outline-none"
+                    className="w-full px-4 py-3 bg-[#020603] border border-biotech-900 rounded-xl text-sm focus:ring-4 focus:ring-biotech-950 focus:border-biotech-400 transition-all outline-none text-white placeholder-slate-700"
                   ></textarea>
                 </div>
 
                 <div className="pt-2">
                   <button
                     type="submit"
-                    className="w-full py-4 bg-pharm-600 hover:bg-pharm-700 text-white font-bold rounded-xl shadow-md shadow-pharm-100 transition-colors"
+                    className="w-full py-4 bg-biotech-600 hover:bg-biotech-500 hover:shadow-glow-green text-[#020603] font-black rounded-xl transition-all uppercase tracking-wider"
                   >
-                    Submit Encrypted Inquiry
+                    Transmit Encrypted Query
                   </button>
                 </div>
               </form>
@@ -1475,53 +1500,53 @@ export default function App() {
       </section>
 
       {/* --- FOOTER --- */}
-      <footer className="relative bg-slate-900 text-slate-400 py-16 px-4 sm:px-6 lg:px-8 z-10">
-        <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-12 border-b border-slate-800 pb-12">
+      <footer className="relative bg-[#020703] text-slate-500 py-16 px-4 sm:px-6 lg:px-8 z-10 border-t border-biotech-900/40 text-left">
+        <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-12 border-b border-biotech-900 pb-12">
           {/* Brand */}
           <div className="space-y-4">
             <div className="flex items-center space-x-3 text-white">
-              <div className="bg-pharm-800 text-pharm-200 p-2 rounded-full">
-                <Leaf className="w-5 h-5 fill-pharm-400/20" />
+              <div className="bg-biotech-950 border border-biotech-900 text-biotech-400 p-2 rounded-full">
+                <Leaf className="w-5 h-5" />
               </div>
               <span className="text-xl font-bold tracking-tight">Central Pharm</span>
             </div>
             <p className="text-sm text-slate-400 leading-relaxed">
-              Clinical expertise meets green commitment. Registered pharmacy practice focused on premium organic wellness formulation.
+              Clinical molecular biology meets high-absorption pharmacological compounding.
             </p>
           </div>
 
           {/* Links */}
           <div>
-            <h4 className="text-white font-bold text-sm mb-4">Apothecary</h4>
+            <h4 className="text-white font-bold text-sm mb-4">Compounds</h4>
             <ul className="space-y-2 text-sm">
               <li><a href="#products" className="hover:text-white transition-colors">Vitamins</a></li>
               <li><a href="#products" className="hover:text-white transition-colors">Supplements</a></li>
-              <li><a href="#products" className="hover:text-white transition-colors">Hypoallergenic Compounds</a></li>
-              <li><a href="#products" className="hover:text-white transition-colors">Botanical Balms</a></li>
+              <li><a href="#products" className="hover:text-white transition-colors">NMN Longevity Matrix</a></li>
+              <li><a href="#products" className="hover:text-white transition-colors">Synaptic Formulas</a></li>
             </ul>
           </div>
 
-          {/* Earth */}
+          {/* Standards */}
           <div>
-            <h4 className="text-white font-bold text-sm mb-4">Planetary Promise</h4>
+            <h4 className="text-white font-bold text-sm mb-4">Certifications</h4>
             <ul className="space-y-2 text-sm">
-              <li><a href="#services" className="hover:text-white transition-colors">Medicine Recycling</a></li>
-              <li><a href="#services" className="hover:text-white transition-colors">Plastic-Free Apothecary</a></li>
-              <li><a href="#services" className="hover:text-white transition-colors">Bicycle Delivery Net</a></li>
-              <li><a href="#about" className="hover:text-white transition-colors">Tree Planting Audit</a></li>
+              <li><a href="#services" className="hover:text-white transition-colors">99.8% HPLC Pure Assay</a></li>
+              <li><a href="#services" className="hover:text-white transition-colors">Heavy Metal Screened</a></li>
+              <li><a href="#services" className="hover:text-white transition-colors">Zero-Additive Guarantee</a></li>
+              <li><a href="#about" className="hover:text-white transition-colors">Registered Lab Practice</a></li>
             </ul>
           </div>
 
-          {/* Hours */}
+          {/* Availability */}
           <div>
             <h4 className="text-white font-bold text-sm mb-4">Availability</h4>
             <ul className="space-y-2 text-sm">
-              <li className="flex items-center space-x-2 text-emerald-400">
-                <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                <span>Pharmacists: 24/7 Support</span>
+              <li className="flex items-center space-x-2 text-biotech-400">
+                <span className="h-2 w-2 rounded-full bg-biotech-400 animate-pulse"></span>
+                <span>Active 24/7 Cellular Support</span>
               </li>
-              <li><span>Bicycle Dispatch: 8 AM - 6 PM</span></li>
-              <li><span>Lab Compounding: 9 AM - 5 PM</span></li>
+              <li><span>Clinical Courier: Same-Day Dispatch</span></li>
+              <li><span>Compounding: 9 AM - 5 PM PST</span></li>
             </ul>
           </div>
         </div>
@@ -1539,25 +1564,25 @@ export default function App() {
       {/* --- SLIDING FIREBASE LOGIN/REGISTER MODAL OVERLAY --- */}
       {isAuthViewOpen && (
         <div className="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center p-4">
-          <div onClick={() => { setIsAuthViewOpen(false); setAuthError(''); }} className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm"></div>
+          <div onClick={() => { setIsAuthViewOpen(false); setAuthError(''); }} className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm"></div>
 
-          <div className="relative bg-white max-w-md w-full rounded-3xl p-8 shadow-2xl border border-slate-100 text-left animate-scaleUp z-10">
+          <div className="relative bg-[#051107] border border-biotech-900 max-w-md w-full rounded-3xl p-8 shadow-glow-green border-biotech-500/20 text-left animate-scaleUp z-10 text-white">
             <button
               onClick={() => { setIsAuthViewOpen(false); setAuthError(''); }}
-              className="absolute top-4 right-4 p-1.5 hover:bg-slate-100 text-slate-400 hover:text-slate-600 rounded-full transition-colors"
+              className="absolute top-4 right-4 p-1.5 bg-biotech-950/60 border border-biotech-900 hover:border-biotech-400 text-biotech-400 hover:text-white rounded-full transition-colors"
             >
               <X className="w-5 h-5" />
             </button>
 
             <div className="space-y-6">
               <div className="text-center space-y-2">
-                <div className="bg-pharm-100 text-pharm-700 p-3 rounded-2xl inline-block shadow-inner mb-2">
-                  <Lock className="w-6 h-6" />
+                <div className="bg-biotech-950 border border-biotech-900 text-biotech-400 p-3 rounded-2xl inline-block shadow-inner mb-2">
+                  <Lock className="w-6 h-6 animate-pulseGlow" />
                 </div>
-                <h3 className="text-2xl font-extrabold text-slate-900">
+                <h3 className="text-2xl font-black tracking-tight text-white">
                   {authMode === 'login' ? 'Registered Pharmacist Portal' : 'Register New Staff Profile'}
                 </h3>
-                <p className="text-xs text-slate-500 leading-relaxed">
+                <p className="text-xs text-slate-400 leading-relaxed">
                   {authMode === 'login' 
                     ? 'Access your clinical prescription inquiries & stock inventory CMS.' 
                     : 'Create a certified credentials profile connected to your Firebase project.'}
@@ -1565,14 +1590,14 @@ export default function App() {
                 
                 {/* Mode toggle badge */}
                 <span className={`text-[10px] font-bold inline-block px-2.5 py-0.5 rounded-full ${
-                  isRealFirebaseActive ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'
+                  isRealFirebaseActive ? 'bg-emerald-950/80 text-biotech-300 border border-biotech-500/40' : 'bg-amber-950/80 text-amber-300 border border-amber-500/40'
                 }`}>
                   {isRealFirebaseActive ? '🔥 Connected to production Firebase' : '⚙️ Operating in sandbox mode'}
                 </span>
               </div>
 
               {authError && (
-                <div className="bg-red-50 border border-red-200 p-3.5 rounded-xl flex items-start space-x-2.5 text-xs text-red-700">
+                <div className="bg-red-950/40 border border-red-900/60 p-3.5 rounded-xl flex items-start space-x-2.5 text-xs text-red-400">
                   <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
                   <p>{authError}</p>
                 </div>
@@ -1581,19 +1606,19 @@ export default function App() {
               {/* Input Form */}
               <form onSubmit={handleAuthSubmit} className="space-y-4">
                 <div className="space-y-1">
-                  <label className="text-xs font-bold text-slate-600 uppercase block">Pharmacist Email</label>
+                  <label className="text-[10px] font-extrabold text-biotech-300 uppercase tracking-widest block">Pharmacist Email</label>
                   <input
                     type="email"
                     required
-                    placeholder="e.g. pharmacist@centralpharm.com"
+                    placeholder="pharmacist@centralpharm.com"
                     value={authEmail}
                     onChange={(e) => setAuthEmail(e.target.value)}
-                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-4 focus:ring-pharm-100 focus:bg-white focus:border-pharm-500 transition-all outline-none"
+                    className="w-full px-4 py-3 bg-[#020603] border border-biotech-900 rounded-xl text-sm focus:ring-4 focus:ring-biotech-950 focus:border-biotech-400 transition-all outline-none text-white placeholder-slate-700"
                   />
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-xs font-bold text-slate-600 uppercase block">Secret Password</label>
+                  <label className="text-[10px] font-extrabold text-biotech-300 uppercase tracking-widest block">Secret Password</label>
                   <div className="relative">
                     <input
                       type={showPassword ? 'text' : 'password'}
@@ -1601,25 +1626,46 @@ export default function App() {
                       placeholder="••••••••"
                       value={authPassword}
                       onChange={(e) => setAuthPassword(e.target.value)}
-                      className="w-full pl-4 pr-11 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-4 focus:ring-pharm-100 focus:bg-white focus:border-pharm-500 transition-all outline-none"
+                      className="w-full pl-4 pr-11 py-3 bg-[#020603] border border-biotech-900 rounded-xl text-sm focus:ring-4 focus:ring-biotech-950 focus:border-biotech-400 transition-all outline-none text-white placeholder-slate-700"
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute inset-y-0 right-4 flex items-center text-slate-400 hover:text-slate-600"
+                      className="absolute inset-y-0 right-4 flex items-center text-slate-500 hover:text-white"
                     >
                       {showPassword ? <EyeOff className="w-4.5 h-4.5" /> : <Eye className="w-4.5 h-4.5" />}
                     </button>
                   </div>
                 </div>
 
+                {/* Staff Invitation Key input (Displays ONLY during Sign-Up registration mode!) */}
+                {authMode === 'register' && (
+                  <div className="space-y-1 animate-slideUp">
+                    <label className="text-[10px] font-extrabold text-amber-400 uppercase tracking-widest block flex items-center space-x-1">
+                      <KeyRound className="w-3.5 h-3.5" />
+                      <span>Staff Invite Passcode *</span>
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="dispensary_secret_key"
+                      value={authInvitationKey}
+                      onChange={(e) => setAuthInvitationKey(e.target.value)}
+                      className="w-full px-4 py-3 bg-[#020603] border border-amber-900/60 focus:border-amber-400 rounded-xl text-sm focus:ring-4 focus:ring-amber-950/60 transition-all outline-none text-white placeholder-slate-700"
+                    />
+                    <span className="text-[9px] text-slate-400 block mt-1 leading-normal">
+                      Security Alert: Creation of pharmacist credentials requires authorization via the dispenser key.
+                    </span>
+                  </div>
+                )}
+
                 <button
                   type="submit"
                   disabled={authLoading}
-                  className="w-full py-3.5 bg-pharm-600 hover:bg-pharm-700 disabled:opacity-50 text-white font-bold rounded-xl shadow-md transition-colors text-sm flex items-center justify-center space-x-2"
+                  className="w-full py-3.5 bg-biotech-600 hover:bg-biotech-500 hover:shadow-glow-green disabled:opacity-50 text-[#020603] font-black rounded-xl transition-all text-sm uppercase tracking-wider flex items-center justify-center space-x-2"
                 >
                   {authLoading ? (
-                    <span>Authenticating credentials...</span>
+                    <span>Verifying details...</span>
                   ) : (
                     <>
                       <Lock className="w-4 h-4" />
@@ -1630,13 +1676,13 @@ export default function App() {
               </form>
 
               {/* Footer switch modes */}
-              <div className="text-center text-xs space-y-2 border-t border-slate-100 pt-4">
+              <div className="text-center text-xs space-y-2 border-t border-biotech-900/50 pt-4">
                 <button
                   onClick={() => {
                     setAuthMode(authMode === 'login' ? 'register' : 'login');
                     setAuthError('');
                   }}
-                  className="text-pharm-700 hover:text-pharm-900 font-bold"
+                  className="text-biotech-400 hover:text-white font-bold"
                 >
                   {authMode === 'login' 
                     ? 'No staff account? Register profile' 
@@ -1645,7 +1691,13 @@ export default function App() {
                 
                 {!isRealFirebaseActive && authMode === 'login' && (
                   <p className="text-[10px] text-slate-400 leading-normal max-w-xs mx-auto">
-                    Sandbox Helper: Sign in instantly with <strong className="text-slate-700 block">email: pharmacist@centralpharm.com password: password123</strong>
+                    Sandbox Credentials: <strong className="text-slate-200 block">email: pharmacist@centralpharm.com password: password123</strong>
+                  </p>
+                )}
+
+                {authMode === 'register' && (
+                  <p className="text-[10px] text-amber-400/80 leading-normal max-w-xs mx-auto">
+                    Sandbox Invite Passcode: <strong className="text-amber-200 block">CENTRAL_DISPENSARY_2026</strong>
                   </p>
                 )}
               </div>
@@ -1658,31 +1710,31 @@ export default function App() {
       <div className="fixed bottom-6 right-6 z-40 pointer-events-auto">
         {isChatOpen ? (
           /* Live Chat box */
-          <div className="w-[340px] sm:w-[380px] bg-white border border-pharm-100 rounded-3xl shadow-2xl flex flex-col justify-between overflow-hidden animate-slideUp">
+          <div className="w-[340px] sm:w-[380px] bg-[#051107] border border-biotech-900 rounded-3xl shadow-glow-green flex flex-col justify-between overflow-hidden animate-slideUp text-white">
             {/* Chat header */}
-            <div className="bg-pharm-800 text-white p-4 flex items-center justify-between">
+            <div className="bg-[#020603] border-b border-biotech-900 p-4 flex items-center justify-between">
               <div className="flex items-center space-x-3">
                 <div className="relative">
-                  <div className="bg-pharm-100 text-pharm-900 text-lg w-10 h-10 flex items-center justify-center rounded-full font-bold">
+                  <div className="bg-biotech-950 text-biotech-400 border border-biotech-900 text-lg w-10 h-10 flex items-center justify-center rounded-full font-bold">
                     🌿
                   </div>
-                  <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full bg-emerald-400 border-2 border-white"></span>
+                  <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full bg-biotech-400 border border-[#020603]"></span>
                 </div>
-                <div>
+                <div className="text-left">
                   <span className="block font-bold text-sm text-white">Sarah, PharmD</span>
-                  <span className="block text-[10px] text-emerald-300 font-medium">Active Community Pharmacist</span>
+                  <span className="block text-[10px] text-biotech-400 font-medium">Certified Bio-Pharmacist</span>
                 </div>
               </div>
               <button
                 onClick={() => setIsChatOpen(false)}
-                className="p-1 hover:bg-pharm-700 rounded-full text-pharm-200 hover:text-white transition-colors"
+                className="p-1 hover:bg-[#020603]/80 rounded-full text-biotech-400 hover:text-white transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             {/* Chat Messages */}
-            <div className="h-72 p-4 overflow-y-auto space-y-3.5 bg-[#f8fbf9]/60">
+            <div className="h-72 p-4 overflow-y-auto space-y-3.5 bg-[#020603]/40">
               {chatMessages.map((msg, index) => {
                 const isBot = msg.sender === 'bot'
                 return (
@@ -1691,10 +1743,10 @@ export default function App() {
                     className={`flex ${isBot ? 'justify-start' : 'justify-end'}`}
                   >
                     <div
-                      className={`max-w-[80%] p-3.5 rounded-2xl text-xs leading-relaxed ${
+                      className={`max-w-[80%] p-3.5 rounded-2xl text-xs leading-relaxed text-left ${
                         isBot
-                          ? 'bg-white border border-slate-100 text-slate-800 rounded-tl-none shadow-sm'
-                          : 'bg-pharm-700 text-white rounded-tr-none shadow'
+                          ? 'bg-[#020603] border border-biotech-900 text-slate-200 rounded-tl-none'
+                          : 'bg-biotech-600 text-slate-950 font-semibold rounded-tr-none'
                       }`}
                     >
                       {msg.text}
@@ -1706,18 +1758,18 @@ export default function App() {
             </div>
 
             {/* Message input */}
-            <form onSubmit={handleChatSubmit} className="p-3 border-t border-slate-100 bg-white flex items-center gap-2">
+            <form onSubmit={handleChatSubmit} className="p-3 border-t border-biotech-900/50 bg-[#020603] flex items-center gap-2">
               <input
                 type="text"
-                placeholder="Ask Sarah (e.g. prescription help, delivery)..."
+                placeholder="Ask Sarah (e.g. molecular structures, delivery)..."
                 value={chatInput}
                 onChange={(e) => setChatInput(e.target.value)}
-                className="flex-1 px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-2xl text-xs outline-none focus:bg-white focus:border-pharm-500 transition-all"
+                className="flex-1 px-4 py-2.5 bg-[#051107] border border-biotech-900 rounded-2xl text-xs outline-none focus:border-biotech-400 text-white transition-all placeholder-slate-600"
               />
               <button
                 type="submit"
                 disabled={!chatInput.trim()}
-                className="p-2.5 bg-pharm-600 hover:bg-pharm-700 disabled:opacity-50 text-white rounded-xl transition-all"
+                className="p-2.5 bg-biotech-600 hover:bg-biotech-500 disabled:opacity-50 text-slate-950 rounded-xl transition-all"
               >
                 <ArrowRight className="w-4 h-4" />
               </button>
@@ -1727,14 +1779,14 @@ export default function App() {
           /* Compact float trigger button */
           <button
             onClick={() => setIsChatOpen(true)}
-            className="flex items-center space-x-2 bg-pharm-800 hover:bg-pharm-900 text-white px-5 py-3.5 rounded-full shadow-2xl hover:scale-105 active:scale-95 transition-all group"
+            className="flex items-center space-x-2 bg-[#051107] border border-biotech-900 text-biotech-300 hover:text-white px-5 py-3.5 rounded-full shadow-2xl hover:scale-105 active:scale-95 transition-all group hover:border-biotech-400/40 hover:shadow-glow-green-sm"
           >
             <span className="relative flex h-2.5 w-2.5">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-400"></span>
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-biotech-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-biotech-400"></span>
             </span>
             <MessageSquare className="w-5 h-5 fill-white/10" />
-            <span className="text-xs font-extrabold tracking-wide">Live Support</span>
+            <span className="text-xs font-black tracking-widest uppercase">Consult AI</span>
           </button>
         )}
       </div>
@@ -1742,25 +1794,24 @@ export default function App() {
       {/* --- DETAILED PRODUCT DIALOG MODAL --- */}
       {selectedProduct && (
         <div className="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center p-4">
-          {/* Backdrop */}
           <div
             onClick={() => setSelectedProduct(null)}
-            className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity"
+            className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm transition-opacity"
           ></div>
 
           {/* Modal Container */}
-          <div className="relative bg-white max-w-lg w-full rounded-3xl overflow-hidden shadow-2xl border border-slate-100 animate-scaleUp text-left">
+          <div className="relative bg-[#051107] border border-biotech-900 max-w-lg w-full rounded-3xl overflow-hidden shadow-2xl animate-scaleUp text-left text-white">
             
             {/* Visual Header Banner */}
-            <div className="bg-pharm-50 p-8 flex items-center justify-center text-8xl relative border-b border-pharm-100/30">
+            <div className="bg-[#020603] p-8 flex items-center justify-center text-8xl relative border-b border-biotech-900/50">
               <button
                 onClick={() => setSelectedProduct(null)}
-                className="absolute top-4 right-4 p-1.5 bg-white hover:bg-slate-100 text-slate-400 hover:text-slate-600 rounded-full shadow-sm transition-colors"
+                className="absolute top-4 right-4 p-1.5 bg-[#051107] border border-biotech-900 hover:border-biotech-400 text-biotech-400 hover:text-white rounded-full transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
               <span>{selectedProduct.icon}</span>
-              <span className="absolute bottom-4 left-6 bg-white border border-pharm-100 text-pharm-800 text-[10px] font-extrabold px-3 py-1 rounded-full uppercase tracking-widest">
+              <span className="absolute bottom-4 left-6 bg-biotech-950 border border-biotech-900 text-biotech-300 text-[10px] font-extrabold px-3 py-1 rounded-full uppercase tracking-widest">
                 {selectedProduct.category}
               </span>
             </div>
@@ -1768,24 +1819,24 @@ export default function App() {
             {/* Info Body */}
             <div className="p-6 sm:p-8 space-y-5">
               <div>
-                <div className="flex items-center space-x-2 text-amber-500 font-extrabold text-xs mb-1 bg-amber-50 px-2 py-0.5 rounded-full max-w-max">
-                  <Star className="w-3.5 h-3.5 fill-amber-500 stroke-amber-500" />
-                  <span>{selectedProduct.rating} Verified Patient Rating</span>
+                <div className="flex items-center space-x-2 text-amber-400 font-extrabold text-xs mb-1 bg-amber-950/20 px-2 py-0.5 rounded-full border border-amber-900/30 max-w-max">
+                  <Star className="w-3.5 h-3.5 fill-amber-400 stroke-amber-400" />
+                  <span>{selectedProduct.rating} Verified Clinical Rating</span>
                 </div>
-                <h3 className="text-2xl font-extrabold text-slate-950">{selectedProduct.name}</h3>
+                <h3 className="text-2xl font-black tracking-tight text-white">{selectedProduct.name}</h3>
               </div>
 
-              <p className="text-slate-600 text-sm leading-relaxed">
+              <p className="text-slate-300 text-sm leading-relaxed">
                 {selectedProduct.description}
               </p>
 
               {/* Formulation Key Features list */}
               <div className="space-y-2 pt-2">
-                <span className="block text-[11px] font-extrabold text-slate-400 uppercase tracking-widest">Clinical Integrity</span>
+                <span className="block text-[10px] font-extrabold text-biotech-400 uppercase tracking-widest">Molecular Integrity</span>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   {selectedProduct.features && selectedProduct.features.map((feature, idx) => (
-                    <div key={idx} className="flex items-center space-x-2 text-xs text-slate-700">
-                      <div className="bg-pharm-100 text-pharm-700 p-0.5 rounded-full">
+                    <div key={idx} className="flex items-center space-x-2 text-xs text-slate-300">
+                      <div className="bg-biotech-950 text-biotech-400 border border-biotech-900 p-0.5 rounded-full">
                         <Check className="w-3 h-3 stroke-[2.5]" />
                       </div>
                       <span className="font-semibold">{feature}</span>
@@ -1795,10 +1846,10 @@ export default function App() {
               </div>
 
               {/* Purchase Footer mock */}
-              <div className="pt-6 border-t border-slate-100 flex items-center justify-between gap-6">
+              <div className="pt-6 border-t border-biotech-900/30 flex items-center justify-between gap-6">
                 <div>
-                  <span className="text-[10px] font-bold text-slate-400 block uppercase">Price</span>
-                  <span className="text-2xl font-black text-slate-950">${selectedProduct.price.toFixed(2)}</span>
+                  <span className="text-[10px] font-bold text-biotech-400 block uppercase tracking-wider">Active Cost</span>
+                  <span className="text-2xl font-black text-white">${selectedProduct.price.toFixed(2)}</span>
                 </div>
                 <div className="flex space-x-3 flex-1 justify-end">
                   <button
@@ -1809,12 +1860,12 @@ export default function App() {
                       setFormData(prev => ({
                         ...prev,
                         subject: 'Compounding Request',
-                        message: `Hello Central Pharm! I am highly interested in the organic product "${selectedProduct.name}" and would like to coordinate home delivery or inquire about compounding formulation details. Please contact me!`
+                        message: `Hello Central Pharm! I am highly interested in the compound formula "${selectedProduct.name}" and would like to coordinate custom delivery and absorption options. Please contact me!`
                       }))
                     }}
-                    className="px-5 py-3 bg-pharm-600 hover:bg-pharm-700 text-white font-bold rounded-xl text-xs transition-colors shadow-sm w-full text-center"
+                    className="px-5 py-3 bg-biotech-600 hover:bg-biotech-500 hover:shadow-glow-green text-slate-950 font-black rounded-xl text-xs transition-all w-full text-center uppercase tracking-wider"
                   >
-                    Consult Pharmacist
+                    Consult Dispatch
                   </button>
                 </div>
               </div>

@@ -2,30 +2,30 @@ export const services = [
   {
     id: "serv-1",
     icon: "ShieldAlert",
-    title: "24/7 Wellness Support",
-    description: "Our accredited pharmacists are available around the clock via chat, call, or email to guide your therapeutic needs with absolute precision.",
-    benefit: "Always Connected"
+    title: "24/7 Cellular Support",
+    description: "Our certified compounding bio-pharmacists are online around the clock to analyze your diagnostics, genetic inquiries, and medication synergies.",
+    benefit: "Continuous Monitoring"
   },
   {
     id: "serv-2",
     icon: "Truck",
-    title: "Eco-Friendly Delivery",
-    description: "Same-day prescription and order deliveries using electric cargo bikes and fully compostable protective shipping bags. Zero carbon footprint.",
-    benefit: "Zero Emission Delivery"
+    title: "Nano-Cold Dispatch",
+    description: "Our localized dispatch operates rapid delivery with temperature-controlled, hermetically sealed carriers to preserve peptide and molecular structures.",
+    benefit: "Hermetic Temperature-Control"
   },
   {
     id: "serv-3",
     icon: "Leaf",
-    title: "Green Compounding",
-    description: "Custom medicine compounding tailored specifically for you, using hypoallergenic, plant-derived, and preservative-free binders.",
-    benefit: "Hypoallergenic Formulations"
+    title: "Bio-Compounding Labs",
+    description: "We compound medications from scratch, utilizing pure bio-derived, allergen-free plant celluloses, completely free of synthetic fillers or microplastics.",
+    benefit: "Zero Microplastic Guarantee"
   },
   {
     id: "serv-4",
     icon: "HeartHandshake",
-    title: "Medication Take-back",
-    description: "Bring in your expired or unused medications. We safely incinerate them through eco-certified channels preventing groundwater chemical leakage.",
-    benefit: "Environmental Protection"
+    title: "Pharmacology Audits",
+    description: "We conduct automatic smart screening of your medication profile, checking for drug-drug interference and absorption inhibitors in real-time.",
+    benefit: "Absorption Optimization"
   }
 ];
 
@@ -33,25 +33,25 @@ export const testimonials = [
   {
     id: "test-1",
     name: "Dr. Arthur Vance",
-    role: "Environmental Scientist",
-    quote: "Central Pharm has completely changed my view of healthcare. Knowing my daily vitamins are plant-derived and delivered in plastic-free packaging aligns beautifully with my commitment to sustainability.",
+    role: "Clinical Neuroscientist",
+    quote: "Central Pharm's NMN Longevity Matrix has yielded outstanding cellular performance indexes. Their commitment to pure liposomal delivery systems sets an entirely new industry standard.",
     avatar: "🧪",
     rating: 5
   },
   {
     id: "test-2",
-    name: "Eleanor Vance",
-    role: "Mother of Two & Yogi",
-    quote: "The 24/7 support saved us when my daughter developed an allergy at 2 AM. The pharmacist guided us to a natural, soothing lotion that worked within minutes, all with serene empathy.",
-    avatar: "🧘‍♀️",
+    name: "Aria Thorne",
+    role: "Longevity Researcher",
+    quote: "Switching my family's vitamins to Central Pharm was a game changer. The sublingual B12 and probiotic synaptic formulas are incredibly effective, completely bypassing standard filler side-effects.",
+    avatar: "🧬",
     rating: 5
   },
   {
     id: "test-3",
     name: "Marcus Sterling",
-    role: "Athletic Coach",
-    quote: "As an endurance athlete, I trust their pure Omega-3 and Magnesium compounds. The quality is clinical grade, with absolutely zero artificial fillers or toxic heavy metals.",
-    avatar: "🚴‍♂️",
+    role: "Pro Athlete & Biotech Investor",
+    quote: "The bio-shield peptide balm and algae omega-3 represent the absolute cutting edge of health optimization. Knowing exactly what goes into my body, with certified purity, is essential.",
+    avatar: "🦾",
     rating: 5
   }
 ];
@@ -59,22 +59,22 @@ export const testimonials = [
 export const faqs = [
   {
     id: "faq-1",
-    question: "What makes Central Pharm 'eco-friendly' compared to regular pharmacies?",
-    answer: "We focus on planetary wellness as much as human health. This includes: using 100% compostable and recycled packaging, offering a safe medicine return-and-recycle program, prioritizing plant-derived and vegan ingredients, and offsetting 100% of our business carbon emissions including zero-emission electric cargo bicycle deliveries."
+    question: "What is 'bio-compounding' and how is it different?",
+    answer: "Bio-compounding is the customized formulation of medications using only active physiological molecules and natural plant-derived binders. We completely ban common synthetic industrial fillers like titanium dioxide, microcrystalline cellulose, silicon dioxide, and chemical glazes that can irritate the gut microbiome."
   },
   {
     id: "faq-2",
-    question: "How does the 24/7 support work?",
-    answer: "We have an active team of registered, certified pharmacists online at all hours. You can call, live chat, or message us. We answer health questions, offer guidance on drug-drug interactions, explain dosage instructions, and help with side effects instantly."
+    question: "How does the staff invitation system work?",
+    answer: "To protect the integrity of our pharmacy practice, only verified, licensed pharmacists can register credentials to access our dashboard. Registration requires a secret staff registration passcode provided by the dispensary administration."
   },
   {
     id: "faq-3",
-    question: "Are your supplements and vitamins clinically tested?",
-    answer: "Yes, absolutely. Every brand and compound we offer undergoes strict third-party laboratory verification for purity, potency, and heavy metals. You can view the Certificate of Analysis (CoA) for any batch by requesting it from our pharmacists."
+    question: "Are your ingredients certified for heavy metal safety?",
+    answer: "Yes. Every single batch of molecules undergoes strict high-performance liquid chromatography (HPLC) testing and third-party laboratory verification for purity, potency, and heavy metal counts. Certified results are fully transparent."
   },
   {
     id: "faq-4",
-    question: "Can I transfer my prescription to Central Pharm?",
-    answer: "Yes! Transferring is seamless. You can fill out our contact form or call us, and our team will coordinate directly with your previous pharmacy or primary physician to safely bring your prescriptions over."
+    question: "Can I transfer my medical prescription to Central Pharm?",
+    answer: "Yes, transferring is immediate and automated. Simply create an inquiry or call our portal. Our clinical pharmacists will coordinate directly with your previous provider or physician to port your dosage requirements seamlessly."
   }
 ];

@@ -1,6 +1,5 @@
 import React, { useRef, useMemo, useEffect, useState } from 'react'
-import { Canvas, useFrame, useThree } from '@react-three/fiber'
-import { OrbitControls, Float, Stars, Center } from '@react-three/drei'
+import { Canvas, useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 
 // Smooth scroll position hook
@@ -28,20 +27,24 @@ function useScrollPercent() {
 function CapsuleModel({ scrollPercent, index, initialPos }) {
   const meshRef = useRef()
   
-  // Create two-toned capsule by using group of two cylinders/half-spheres
+  // High-tech, metallic, glowing pills
   const pillMaterial1 = useMemo(() => new THREE.MeshStandardMaterial({
-    color: '#86efac', // Pastel green
-    roughness: 0.1,
-    metalness: 0.1,
+    color: '#00ff66', // Glowing neon green
+    roughness: 0.05,
+    metalness: 0.8,
+    emissive: '#004d1f',
+    emissiveIntensity: 0.5,
   }), [])
   
   const pillMaterial2 = useMemo(() => new THREE.MeshStandardMaterial({
-    color: '#ffffff', // Clean white
-    roughness: 0.1,
-    metalness: 0.1,
+    color: '#0d1f11', // Metallic deep black-green
+    roughness: 0.05,
+    metalness: 0.9,
+    emissive: '#030a04',
+    emissiveIntensity: 0.2,
   }), [])
 
-  useFrame((state, delta) => {
+  useFrame((state) => {
     if (!meshRef.current) return
     const t = state.clock.getElapsedTime()
     
@@ -49,12 +52,11 @@ function CapsuleModel({ scrollPercent, index, initialPos }) {
     const floatOffset = Math.sin(t + index * 1.5) * 0.2
     
     // Map scroll percent to dynamic movement
-    // Rotate and reposition based on scroll
     const scrollRotation = scrollPercent * Math.PI * 4
     const scrollYShift = -scrollPercent * 12
     const scrollXShift = Math.sin(scrollPercent * Math.PI) * (index % 2 === 0 ? 3 : -3)
 
-    // Lerp to target positions
+    // Lerp positions
     const targetX = initialPos[0] + scrollXShift
     const targetY = initialPos[1] + scrollYShift + floatOffset
     const targetZ = initialPos[2]
@@ -102,22 +104,27 @@ function DNAHelix({ scrollPercent }) {
   const heightStep = 0.4
   const rotationPerStep = 0.4
 
+  // Glowing neon/biotech helix nodes
   const materialRed = useMemo(() => new THREE.MeshStandardMaterial({
-    color: '#34d399', // Emerald/Pastel Green
-    roughness: 0.2,
-    metalness: 0.3
+    color: '#00ff66', // Pure vibrant green
+    roughness: 0.1,
+    metalness: 0.5,
+    emissive: '#00ff66',
+    emissiveIntensity: 0.6
   }), [])
 
   const materialBlue = useMemo(() => new THREE.MeshStandardMaterial({
-    color: '#6ee7b7', // Mint Pastel
-    roughness: 0.2,
-    metalness: 0.3
+    color: '#00cc44', // Darker rich green
+    roughness: 0.1,
+    metalness: 0.5,
+    emissive: '#00802b',
+    emissiveIntensity: 0.3
   }), [])
 
   const materialBar = useMemo(() => new THREE.MeshStandardMaterial({
-    color: '#ffffff',
-    roughness: 0.5,
-    metalness: 0.1
+    color: '#1a3a22', // Metallic dark green forest
+    roughness: 0.2,
+    metalness: 0.8
   }), [])
 
   const spheres = useMemo(() => {
@@ -139,7 +146,7 @@ function DNAHelix({ scrollPercent }) {
     return arr
   }, [])
 
-  useFrame((state, delta) => {
+  useFrame((state) => {
     if (!groupRef.current) return
     const t = state.clock.getElapsedTime()
 
@@ -147,10 +154,10 @@ function DNAHelix({ scrollPercent }) {
     const scrollYShift = -scrollPercent * 8 + 3
     const scrollRotation = scrollPercent * Math.PI * 3
 
-    // Position DNA in a premium spot on the screen
+    // Position DNA
     groupRef.current.position.y = THREE.MathUtils.lerp(groupRef.current.position.y, scrollYShift, 0.1)
     
-    // Rotate DNA as we scroll and float
+    // Rotate DNA
     groupRef.current.rotation.y = THREE.MathUtils.lerp(groupRef.current.rotation.y, scrollRotation + t * 0.5, 0.1)
     groupRef.current.rotation.x = THREE.MathUtils.lerp(groupRef.current.rotation.x, 0.3 + Math.sin(t * 0.2) * 0.1, 0.1)
   })
@@ -187,11 +194,9 @@ function WellnessParticles({ scrollPercent }) {
   const pointsRef = useRef()
   const particleCount = 120
 
-  const [positions, initialY] = useMemo(() => {
+  const [positions] = useMemo(() => {
     const pos = new Float32Array(particleCount * 3)
-    const initY = new Float32Array(particleCount)
     for (let i = 0; i < particleCount; i++) {
-      // Create random distribution around space
       const x = (Math.random() - 0.5) * 15
       const y = (Math.random() - 0.5) * 20
       const z = (Math.random() - 0.5) * 8 - 2
@@ -199,10 +204,8 @@ function WellnessParticles({ scrollPercent }) {
       pos[i * 3] = x
       pos[i * 3 + 1] = y
       pos[i * 3 + 2] = z
-
-      initY[i] = y
     }
-    return [pos, initY]
+    return [pos]
   }, [])
 
   useFrame((state) => {
@@ -211,21 +214,17 @@ function WellnessParticles({ scrollPercent }) {
     const posArr = pointsRef.current.geometry.attributes.position.array
 
     for (let i = 0; i < particleCount; i++) {
-      // Flowing wave motion
       const index = i * 3
       const x = posArr[index]
       
-      // Standard flow upwards
+      // Flowing upwards
       let y = posArr[index + 1] + 0.02
-      if (y > 10) y = -10 // wrap around
+      if (y > 10) y = -10
       
-      // Wave effect
       posArr[index + 1] = y
       posArr[index] = x + Math.sin(t + y) * 0.005
     }
     pointsRef.current.geometry.attributes.position.needsUpdate = true
-
-    // Slightly rotate the whole network
     pointsRef.current.rotation.y = t * 0.02 + scrollPercent * 1.5
   })
 
@@ -238,17 +237,17 @@ function WellnessParticles({ scrollPercent }) {
         />
       </bufferGeometry>
       <pointsMaterial
-        color="#86efac"
+        color="#00ff66" // Bright neon green particles
         size={0.12}
         transparent
-        opacity={0.6}
+        opacity={0.7}
         sizeAttenuation
       />
     </points>
   )
 }
 
-// Main ThreeJS Canvas Component with responsive settings
+// Main ThreeJS Canvas Component with dark ambient settings
 export default function ThreeCanvas() {
   const scrollPercent = useScrollPercent()
   const [isMobile, setIsMobile] = useState(false)
@@ -268,12 +267,14 @@ export default function ThreeCanvas() {
         camera={{ position: [0, 0, 6], fov: 60 }}
         gl={{ antialias: true }}
         onCreated={({ gl }) => {
-          gl.setClearColor(new THREE.Color('#f4faf6'), 1)
+          gl.setClearColor(new THREE.Color('#030904'), 1) // Dark obsidian-green background
         }}
       >
-        <ambientLight intensity={1.5} />
-        <directionalLight position={[5, 10, 5]} intensity={2.0} castShadow />
-        <pointLight position={[-5, -5, -5]} intensity={0.5} />
+        <ambientLight intensity={0.4} />
+        {/* Spot/Directional light cast to make metals shiny */}
+        <directionalLight position={[5, 10, 5]} intensity={3.0} castShadow />
+        <pointLight position={[-5, -5, -5]} intensity={1.0} color="#00ff66" />
+        <pointLight position={[3, 3, 3]} intensity={1.5} color="#ffffff" />
 
         {/* Floating Pills */}
         {!isMobile && (
@@ -294,7 +295,7 @@ export default function ThreeCanvas() {
         {/* DNA Helix */}
         <DNAHelix scrollPercent={scrollPercent} />
 
-        {/* Flowing wellness particles */}
+        {/* Flowing particles */}
         <WellnessParticles scrollPercent={scrollPercent} />
       </Canvas>
     </div>

@@ -2,138 +2,105 @@ export const products = [
   // Medicines
   {
     id: "med-1",
-    name: "Herbal Pain Relief Balm",
+    name: "Bio-Shield Peptide Balm",
     category: "Medicines",
-    price: 14.99,
-    rating: 4.8,
-    badge: "Best Seller",
-    icon: "🌱",
-    description: "Natural organic pain relief balm infused with arnica, peppermint, and eucalyptus oil. Fast-acting and non-greasy.",
-    features: ["100% Organic", "Cruelty-free", "No synthetic scents"]
+    price: 18.99,
+    rating: 4.9,
+    badge: "Gen-2 Formulation",
+    icon: "🧪",
+    description: "Highly advanced peptide ointment. Rapidly binds to skin cells to accelerate dermal barrier repair and trigger neural calming pathways.",
+    features: ["Cellular Peptides", "Rapid absorption", "Dermatologist Certified"]
   },
   {
     id: "med-2",
-    name: "Eco-Throat Lozenges",
+    name: "Nano-Silver Throat spray",
     category: "Medicines",
-    price: 8.49,
-    rating: 4.6,
-    badge: "New",
-    icon: "🍯",
-    description: "Soothe throat irritation with pure honey, organic lemon, and ginger extract. Packaged in 100% biodegradable cardboard.",
-    features: ["Made with wild honey", "Soothing relief", "Zero plastic packaging"]
+    price: 14.50,
+    rating: 4.8,
+    badge: "Advanced Tech",
+    icon: "⚡",
+    description: "Formulated with stabilized bio-active silver nano-colloids and wild throat-soothing enzymes for instant immune defense.",
+    features: ["Nano-colloid delivery", "Broad-spectrum soothing", "Alcohol-free"]
   },
   {
     id: "med-3",
-    name: "Natural Allergy Shield",
+    name: "Cellular Stress Reliever Drops",
     category: "Medicines",
-    price: 19.99,
+    price: 24.00,
     rating: 4.7,
-    badge: "Eco-Choice",
-    icon: "🌸",
-    description: "Antihistamine alternative formulated with stinging nettle, quercetin, and butterbur. Non-drowsy relief for seasonal allergies.",
-    features: ["Non-drowsy formula", "Vegan capsules", "Gluten-free"]
-  },
-  {
-    id: "med-4",
-    name: "Chamomile Calming Drops",
-    category: "Medicines",
-    price: 12.50,
-    rating: 4.9,
-    badge: "Popular",
+    badge: "Bio-Hacking",
     icon: "💧",
-    description: "Liquid herbal extract for natural anxiety relief and peaceful sleep. Made with high-potency organic chamomile blossoms.",
-    features: ["Alcohol-free", "Grown organically", "Pipette dropper included"]
+    description: "Liquid lipid formula designed to instantly cross the blood-brain barrier to alleviate cortisol overproduction and restore neuro-transmitter balance.",
+    features: ["Liposomal delivery", "Hormonal equilibrium", "Rapid action"]
   },
 
   // Supplements
   {
     id: "sup-1",
-    name: "Pure Plant-Based Omega-3",
+    name: "NMN Longevity Matrix",
     category: "Supplements",
-    price: 24.99,
-    rating: 4.9,
-    badge: "Vegan Choice",
-    icon: "🌿",
-    description: "Sustainable algae-sourced DHA & EPA. Supports heart, brain, and joint health without the fishy aftertaste or marine disruption.",
-    features: ["Fish-free formula", "Rich in EPA/DHA", "Eco-friendly bottle"]
+    price: 49.99,
+    rating: 5.0,
+    badge: "Longevity King",
+    icon: "🧬",
+    description: "Pure Beta-Nicotinamide Mononucleotide. Directly raises NAD+ levels to revitalize mitochondrial respiration, restore telomeres, and fight aging.",
+    features: ["99.8% Certified Purity", "Mitochondrial catalyst", "DNA-Repetitive Repair"]
   },
   {
     id: "sup-2",
-    name: "Forest Probiotics Complex",
+    name: "Synaptic Focus Probiotics",
     category: "Supplements",
-    price: 28.00,
-    rating: 4.7,
-    badge: "Clinically Proven",
-    icon: "🍄",
-    description: "50 billion active cultures from 12 diverse strains. Enhanced with organic prebiotics from chicory root to optimize gut biome health.",
-    features: ["Delayed-release capsule", "Shelf-stable", "Dairy-free & Soy-free"]
+    price: 36.00,
+    rating: 4.8,
+    badge: "Mind Catalyst",
+    icon: "🧠",
+    description: "Targeted psychobiotics linking gut flora with brain health. Increases cognitive endurance, clarity, and boosts dopamine synthesis pathways.",
+    features: ["100 Billion Organisms", "Enteric protected capsules", "Brain-Gut optimizer"]
   },
   {
     id: "sup-3",
-    name: "Eco-Active Marine Collagen",
+    name: "Algae-Sourced Omega-3 Fusion",
     category: "Supplements",
-    price: 34.99,
-    rating: 4.8,
-    badge: "Premium Quality",
-    icon: "🌊",
-    description: "Sustainably harvested deep-sea fish collagen peptides. Promotes youthful skin elasticity, strong hair, and joint flexibility.",
-    features: ["Hydrolyzed peptides", "Non-GMO certified", "Easily dissolvable"]
-  },
-  {
-    id: "sup-4",
-    name: "Organic Ashwagandha KSM-66",
-    category: "Supplements",
-    price: 18.99,
+    price: 29.99,
     rating: 4.9,
-    badge: "Stress Buster",
-    icon: "🧘",
-    description: "Highly bioavailable root extract proven to lower cortisol levels, combat chronic fatigue, and boost mental clarity.",
-    features: ["Standardized extract", "With organic black pepper", "Non-GMO"]
+    badge: "Pure Source",
+    icon: "🌿",
+    description: "Premium heavy-metal free vegan Omega-3 extracted from marine microalgae. Direct EPA/DHA source for rapid neuro-vascular support.",
+    features: ["Zero heavy-metals", "Cold-fractionated extraction", "No fishy odor"]
   },
 
   // Vitamins
   {
     id: "vit-1",
-    name: "Sun-D3 Algae Chewables",
+    name: "DNA-Optimized Sun-D3 Drops",
     category: "Vitamins",
-    price: 15.99,
-    rating: 4.8,
+    price: 19.99,
+    rating: 4.9,
     badge: "High Potency",
     icon: "☀️",
-    description: "Highly active Vitamin D3 sourced from wild lichen. Chewable natural cherry flavor. Crucial for bone density and robust immunity.",
-    features: ["5000 IU per serving", "Vegan D3", "Tooth-friendly xylitol"]
+    description: "High-absorption Vitamin D3 with Vitamin K2 (MK-7). Formulated specifically to trigger calcium absorption and promote bone-density longevity.",
+    features: ["10000 IU + 200mcg K2", "Liquid lipid base", "Highly bioavailable"]
   },
   {
     id: "vit-2",
-    name: "Whole-Food Multi Gold",
+    name: "Cell-Active Multivitamin Gold",
     category: "Vitamins",
-    price: 29.99,
-    rating: 4.9,
-    badge: "Essential",
+    price: 38.50,
+    rating: 4.8,
+    badge: "Cell Fuel",
     icon: "🍎",
-    description: "Premium daily multivitamin formulated from over 30 dehydrated organic fruits, vegetables, and superfoods for maximum absorption.",
-    features: ["Rich in active coenzymes", "No synthetic fillers", "Iron-free"]
+    description: "Complete daily active vitamins combined with plant co-factors and powerful antioxidants. Promotes rapid energy production at the cellular level.",
+    features: ["Coenzyme vitamins", "Rich in minerals", "No synthetic binders"]
   },
   {
     id: "vit-3",
-    name: "Active Methyl-B12 Spray",
+    name: "Methylated B12 Sublingual Spray",
     category: "Vitamins",
-    price: 11.99,
-    rating: 4.6,
-    badge: "Easy Spray",
-    icon: "⚡",
-    description: "Rapid sublingual absorption spray of methylcobalamin. Gives instant clean physical energy, nervous system support, and cell regeneration.",
-    features: ["Sublingual fast action", "Sweet berry taste", "Travel-friendly bottle"]
-  },
-  {
-    id: "vit-4",
-    name: "C-Complex Acerola Cherry",
-    category: "Vitamins",
-    price: 16.50,
+    price: 15.99,
     rating: 4.7,
-    badge: "Antioxidant",
+    badge: "Instant Fuel",
     icon: "🍒",
-    description: "Natural Vitamin C derived exclusively from organic acerola cherry. Enhanced with rosehips extract for superior cellular protection.",
-    features: ["Full spectrum bioflavonoids", "Gentle on stomach", "100% natural vitamin C"]
+    description: "Sublingual spray of pre-methylated B12. Directly bypasses gastric digestion for immediate, clean energy and cellular nervous system boost.",
+    features: ["Sublingual absorption", "Active Methylcobalamin", "Vibrant berry flavor"]
   }
 ];

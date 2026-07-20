@@ -4,15 +4,15 @@
 
 @layer base {
   body {
-    @apply bg-[#f4faf6] text-slate-800 antialiased overflow-x-hidden;
+    @apply bg-[#030904] text-slate-100 antialiased overflow-x-hidden;
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
   }
 }
 
 /* Custom animations */
 @keyframes float {
-  0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-10px); }
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-12px) rotate(2deg); }
 }
 
 @keyframes slideLeft {
@@ -35,8 +35,13 @@
   to { opacity: 1; }
 }
 
+@keyframes pulseGlow {
+  0%, 100% { opacity: 0.3; filter: drop-shadow(0 0 5px rgba(0,255,100,0.4)); }
+  50% { opacity: 0.9; filter: drop-shadow(0 0 15px rgba(0,255,100,0.8)); }
+}
+
 .animate-float {
-  animation: float 4s ease-in-out infinite;
+  animation: float 5s ease-in-out infinite;
 }
 
 .animate-slideLeft {
@@ -55,20 +60,26 @@
   animation: fadeIn 0.25s ease-out forwards;
 }
 
-/* Custom Scrollbar for a premium eco-friendly feel */
+.animate-pulseGlow {
+  animation: pulseGlow 2.5s ease-in-out infinite;
+}
+
+/* Custom Scrollbar for a premium biotech neon feel */
 ::-webkit-scrollbar {
   width: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #f1f8f4;
+  background: #030a04;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #bbf7d0;
+  background: #022d12;
+  border: 1px solid #00ff66;
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #86efac;
+  background: #00e65c;
+  box-shadow: 0 0 8px #00ff66;
 }
