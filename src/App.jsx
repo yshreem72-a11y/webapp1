@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react'
 import ThreeCanvas from './components/ThreeCanvas'
-import { products } from './data/products'
+import { products as initialProducts } from './data/products'
 import { services, testimonials, faqs } from './data/siteData'
 import confetti from 'canvas-confetti'
 import {
@@ -24,7 +24,10 @@ import {
   Truck,
   ShieldAlert,
   ChevronDown,
-  Info
+  Info,
+  Plus,
+  Package,
+  Inbox
 } from 'lucide-react'
 
 // Icon helper to render correct lucide icon from string name
@@ -49,6 +52,9 @@ export default function App() {
   const [isAdminOpen, setIsAdminOpen] = useState(false)
   const [selectedProduct, setSelectedProduct] = useState(null)
   
+  // Admin Drawer Tabs
+  const [adminActiveTab, setAdminActiveTab] = useState('inbox') // 'inbox' or 'inventory'
+
   // Search & Filter States
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('All')
@@ -64,6 +70,21 @@ export default function App() {
   // FAQ Accordion State
   const [openFaq, setOpenFaq] = useState(null)
 
+  // Dynamic Product list (loads from localStorage or initialProducts static data)
+  const [productsList, setProductsList] = useState([])
+
+  // State to manage new product form
+  const [newProduct, setNewProduct] = useState({
+    name: '',
+    category: 'Medicines',
+    price: '',
+    badge: 'Eco-Choice',
+    icon: '🌿',
+    description: '',
+    rating: '5.0',
+    featuresRaw: '100% Organic, Vegan Capsules, Recyclable Jar'
+  })
+
   // Contact Form States
   const [formData, setFormData] = useState({
     name: '',
@@ -77,17 +98,17 @@ export default function App() {
   // Submissions (stored in localStorage)
   const [submissions, setSubmissions] = useState([])
 
-  // Load submissions from localStorage on mount
+  // Load products and submissions from localStorage on mount
   useEffect(() => {
-    const saved = localStorage.getItem('central_pharm_submissions')
-    if (saved) {
+    // 1. Load submissions
+    const savedSubmissions = localStorage.getItem('central_pharm_submissions')
+    if (savedSubmissions) {
       try {
-        setSubmissions(JSON.parse(saved))
+        setSubmissions(JSON.parse(savedSubmissions))
       } catch (e) {
         console.error("Failed to parse submissions", e)
       }
     } else {
-      // Add a couple of realistic initial dummy messages so the inbox has content!
       const initialSubmissions = [
         {
           id: "sub-1",
@@ -112,6 +133,20 @@ export default function App() {
       ]
       setSubmissions(initialSubmissions)
       localStorage.setItem('central_pharm_submissions', JSON.stringify(initialSubmissions))
+    }
+
+    // 2. Load inventory
+    const savedInventory = localStorage.getItem('central_pharm_inventory')
+    if (savedInventory) {
+      try {
+        setProductsList(JSON.parse(savedInventory))
+      } catch (e) {
+        console.error("Failed to parse inventory", e)
+        setProductsList(initialProducts)
+      }
+    } else {
+      setProductsList(initialProducts)
+      localStorage.setItem('central_pharm_inventory', JSON.stringify(initialProducts))
     }
   }, [])
 
@@ -159,6 +194,66 @@ export default function App() {
     }, 5000)
   }
 
+  // Handle Adding New Product
+  const handleAddProduct = (e) => {
+    e.preventDefault()
+    if (!newProduct.name || !newProduct.price || !newProduct.description) {
+      alert("Please fill out all required fields.")
+      return
+    }
+
+    const features = newProduct.featuresRaw
+      .split(',')
+      .map(f => f.trim())
+      .filter(f => f.length > 0)
+
+    const newlyCreatedItem = {
+      id: `prod-${Date.now()}`,
+      name: newProduct.name,
+      category: newProduct.category,
+      price: parseFloat(newProduct.price) || 0,
+      rating: parseFloat(newProduct.rating) || 5.0,
+      badge: newProduct.badge,
+      icon: newProduct.icon,
+      description: newProduct.description,
+      features: features.length > 0 ? features : ["100% Pure", "Lab-tested"]
+    }
+
+    const updatedInventory = [newlyCreatedItem, ...productsList]
+    setProductsList(updatedInventory)
+    localStorage.setItem('central_pharm_inventory', JSON.stringify(updatedInventory))
+
+    // Pop tiny celebratory confetti
+    confetti({
+      particleCount: 50,
+      spread: 40,
+      colors: ['#86efac', '#22c55e']
+    })
+
+    // Reset form
+    setNewProduct({
+      name: '',
+      category: 'Medicines',
+      price: '',
+      badge: 'Eco-Choice',
+      icon: '🌿',
+      description: '',
+      rating: '5.0',
+      featuresRaw: '100% Organic, Vegan Capsules, Recyclable Jar'
+    })
+
+    alert("Medication successfully registered into store inventory!")
+  }
+
+  // Handle Deleting Product
+  const handleDeleteProduct = (productId) => {
+    if (confirm("Are you sure you want to remove this item from the active store? This cannot be undone.")) {
+      const updatedInventory = productsList.filter(p => p.id !== productId)
+      setProductsList(updatedInventory)
+      localStorage.setItem('central_pharm_inventory', JSON.stringify(updatedInventory))
+    }
+  }
+
   // Handle Chat Submit
   const handleChatSubmit = (e) => {
     e.preventDefault()
@@ -190,7 +285,7 @@ export default function App() {
   }
 
   // Filter and Search Products
-  const filteredProducts = products.filter(product => {
+  const filteredProducts = productsList.filter(product => {
     const matchesCategory = selectedCategory === 'All' || product.category === selectedCategory
     const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                           product.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -255,7 +350,7 @@ export default function App() {
                 className="flex items-center space-x-1.5 px-4 h-11 border border-pharm-200 rounded-full text-sm font-semibold text-pharm-700 hover:bg-pharm-50 transition-all shadow-sm"
               >
                 <Lock className="w-4 h-4" />
-                <span>Pharmacist Inbox</span>
+                <span>Pharmacist Panel</span>
                 {submissions.filter(s => s.status === 'Unread').length > 0 && (
                   <span className="bg-emerald-500 text-white text-[10px] w-5 h-5 flex items-center justify-center rounded-full font-bold animate-pulse">
                     {submissions.filter(s => s.status === 'Unread').length}
@@ -947,7 +1042,7 @@ export default function App() {
         </div>
       </footer>
 
-      {/* --- PHARMACIST ADMIN INBOX OVERLAY (localStorage visualizer) --- */}
+      {/* --- PHARMACIST ADMIN DISPATCH CONTROL Drawer --- */}
       {isAdminOpen && (
         <div className="fixed inset-0 z-50 overflow-hidden flex justify-end">
           {/* Backdrop */}
@@ -960,99 +1055,297 @@ export default function App() {
           <div className="relative w-full max-w-2xl bg-white h-full shadow-2xl flex flex-col justify-between z-10 border-l border-slate-100 animate-slideLeft">
             
             {/* Header */}
-            <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-pharm-50">
-              <div className="flex items-center space-x-2.5">
-                <div className="bg-pharm-600 text-white p-2 rounded-xl shadow">
-                  <ShieldCheck className="w-5 h-5" />
+            <div className="p-6 border-b border-slate-100 bg-pharm-50">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center space-x-2.5">
+                  <div className="bg-pharm-600 text-white p-2 rounded-xl shadow">
+                    <ShieldCheck className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="font-extrabold text-slate-950 text-lg">Pharmacist Dispatch Control</h3>
+                    <span className="text-xs font-semibold text-pharm-700 block">Reviewing queries & active inventory CMS</span>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="font-extrabold text-slate-950 text-lg">Pharmacist Dispatch Control</h3>
-                  <span className="text-xs font-semibold text-pharm-700 block">Reviewing customer compounding & prescriptions</span>
-                </div>
+                <button
+                  onClick={() => setIsAdminOpen(false)}
+                  className="p-1.5 hover:bg-slate-200/50 rounded-full text-slate-400 hover:text-slate-600 transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
               </div>
-              <button
-                onClick={() => setIsAdminOpen(false)}
-                className="p-1.5 hover:bg-slate-200/50 rounded-full text-slate-400 hover:text-slate-600 transition-colors"
-              >
-                <X className="w-5 h-5" />
-              </button>
+
+              {/* Panel Tabs */}
+              <div className="flex space-x-2 p-1 bg-pharm-100 rounded-xl border border-pharm-200">
+                <button
+                  onClick={() => setAdminActiveTab('inbox')}
+                  className={`flex-1 flex items-center justify-center space-x-2 py-2.5 rounded-lg text-xs font-bold transition-all ${
+                    adminActiveTab === 'inbox'
+                      ? 'bg-white text-pharm-950 shadow-sm'
+                      : 'text-pharm-700 hover:text-pharm-900'
+                  }`}
+                >
+                  <Inbox className="w-4 h-4" />
+                  <span>Customer Inbox ({submissions.length})</span>
+                </button>
+                <button
+                  onClick={() => setAdminActiveTab('inventory')}
+                  className={`flex-1 flex items-center justify-center space-x-2 py-2.5 rounded-lg text-xs font-bold transition-all ${
+                    adminActiveTab === 'inventory'
+                      ? 'bg-white text-pharm-950 shadow-sm'
+                      : 'text-pharm-700 hover:text-pharm-900'
+                  }`}
+                >
+                  <Package className="w-4 h-4" />
+                  <span>Store Inventory ({productsList.length})</span>
+                </button>
+              </div>
             </div>
 
-            {/* List scroll */}
+            {/* List scroll based on active tab */}
             <div className="p-6 overflow-y-auto flex-1 space-y-6">
-              <div className="bg-slate-50 border border-slate-200/60 p-4 rounded-2xl flex items-start space-x-3 text-slate-600 text-xs leading-relaxed">
-                <Info className="w-4 h-4 text-slate-500 mt-0.5 flex-shrink-0" />
-                <p>
-                  This dashboard retrieves queries securely from the browser's <strong>localStorage</strong>. When your customer submits a Contact Form, it immediately populates here with zero backend configuration needed, offering real dynamic mock functionality!
-                </p>
-              </div>
+              
+              {/* --- INBOX TAB --- */}
+              {adminActiveTab === 'inbox' && (
+                <div className="space-y-6">
+                  <div className="bg-slate-50 border border-slate-200/60 p-4 rounded-2xl flex items-start space-x-3 text-slate-600 text-xs leading-relaxed">
+                    <Info className="w-4 h-4 text-slate-500 mt-0.5 flex-shrink-0" />
+                    <p>
+                      This dashboard retrieves customer inquiries securely from <strong>localStorage</strong>. Submit the Contact Form on the homepage to see submissions populate immediately in real-time.
+                    </p>
+                  </div>
 
-              {submissions.length > 0 ? (
-                <div className="space-y-4">
-                  {submissions.map((sub) => (
-                    <div
-                      key={sub.id}
-                      className={`border rounded-2xl p-5 text-left transition-all relative ${
-                        sub.status === 'Unread'
-                          ? 'bg-pharm-50/40 border-pharm-200 shadow-sm'
-                          : 'bg-white border-slate-100'
-                      }`}
-                    >
-                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3">
-                        <div>
-                          <span className="block font-bold text-slate-950 text-base">{sub.name}</span>
-                          <span className="text-xs text-slate-400 block">{sub.date} • {sub.email}</span>
+                  {submissions.length > 0 ? (
+                    <div className="space-y-4">
+                      {submissions.map((sub) => (
+                        <div
+                          key={sub.id}
+                          className={`border rounded-2xl p-5 text-left transition-all relative ${
+                            sub.status === 'Unread'
+                              ? 'bg-pharm-50/40 border-pharm-200 shadow-sm'
+                              : 'bg-white border-slate-100'
+                          }`}
+                        >
+                          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3">
+                            <div>
+                              <span className="block font-bold text-slate-950 text-base">{sub.name}</span>
+                              <span className="text-xs text-slate-400 block">{sub.date} • {sub.email}</span>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <button
+                                onClick={() => toggleReadStatus(sub.id)}
+                                className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase transition-all ${
+                                  sub.status === 'Unread'
+                                    ? 'bg-amber-100 text-amber-800'
+                                    : 'bg-slate-100 text-slate-600'
+                                }`}
+                              >
+                                {sub.status}
+                              </button>
+                              <button
+                                onClick={() => deleteSubmission(sub.id)}
+                                className="p-2 hover:bg-red-50 hover:text-red-500 rounded-lg text-slate-400 transition-colors"
+                                title="Delete"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </div>
+
+                          <div className="mb-2">
+                            <span className="text-[10px] font-bold text-pharm-700 bg-pharm-100 px-2.5 py-0.5 rounded-full uppercase tracking-wider">
+                              {sub.subject}
+                            </span>
+                          </div>
+
+                          <p className="text-slate-600 text-xs leading-relaxed whitespace-pre-line bg-slate-50/50 p-3 rounded-xl border border-slate-100">
+                            {sub.message}
+                          </p>
+
+                          {sub.phone && sub.phone !== 'Not provided' && (
+                            <div className="mt-2 text-[11px] font-medium text-slate-500">
+                              📞 Phone: <span className="font-semibold text-slate-800">{sub.phone}</span>
+                            </div>
+                          )}
                         </div>
-                        <div className="flex items-center space-x-2">
-                          <button
-                            onClick={() => toggleReadStatus(sub.id)}
-                            className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase transition-all ${
-                              sub.status === 'Unread'
-                                ? 'bg-amber-100 text-amber-800'
-                                : 'bg-slate-100 text-slate-600'
-                            }`}
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-16 max-w-sm mx-auto space-y-3">
+                      <div className="bg-slate-50 text-slate-400 p-4 rounded-full inline-block">
+                        <Mail className="w-8 h-8" />
+                      </div>
+                      <h4 className="font-bold text-slate-900">Inbox is empty</h4>
+                      <p className="text-xs text-slate-500">
+                        Inquiries from patients will display here immediately.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* --- INVENTORY CMS TAB --- */}
+              {adminActiveTab === 'inventory' && (
+                <div className="space-y-6">
+                  {/* Explainer */}
+                  <div className="bg-slate-50 border border-slate-200/60 p-4 rounded-2xl flex items-start space-x-3 text-slate-600 text-xs leading-relaxed">
+                    <Info className="w-4 h-4 text-slate-500 mt-0.5 flex-shrink-0" />
+                    <p>
+                      <strong>Active CMS Panel</strong>: Register or deregister medicines from the active storefront. Deleting or adding products here immediately updates the catalog listings above in real-time.
+                    </p>
+                  </div>
+
+                  {/* Add Product Form */}
+                  <div className="bg-pharm-50/30 border border-pharm-100 p-5 rounded-2xl text-left space-y-4">
+                    <h4 className="font-bold text-slate-900 text-sm flex items-center space-x-1.5">
+                      <Plus className="w-4 h-4 text-pharm-600" />
+                      <span>Register New Apothecary Item</span>
+                    </h4>
+
+                    <form onSubmit={handleAddProduct} className="space-y-3 text-xs">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div className="space-y-1">
+                          <label className="font-bold text-slate-600 uppercase block">Product Name *</label>
+                          <input
+                            type="text"
+                            required
+                            placeholder="e.g. Eco-Zinc Booster"
+                            value={newProduct.name}
+                            onChange={(e) => setNewProduct({...newProduct, name: e.target.value})}
+                            className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-pharm-500"
+                          />
+                        </div>
+
+                        <div className="space-y-1">
+                          <label className="font-bold text-slate-600 uppercase block">Category *</label>
+                          <select
+                            value={newProduct.category}
+                            onChange={(e) => setNewProduct({...newProduct, category: e.target.value})}
+                            className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-pharm-500 bg-white"
                           >
-                            {sub.status}
-                          </button>
+                            <option value="Medicines">Medicines</option>
+                            <option value="Supplements">Supplements</option>
+                            <option value="Vitamins">Vitamins</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-3 gap-3">
+                        <div className="space-y-1 col-span-1">
+                          <label className="font-bold text-slate-600 uppercase block">Price ($) *</label>
+                          <input
+                            type="number"
+                            step="0.01"
+                            required
+                            placeholder="19.99"
+                            value={newProduct.price}
+                            onChange={(e) => setNewProduct({...newProduct, price: e.target.value})}
+                            className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-pharm-500"
+                          />
+                        </div>
+
+                        <div className="space-y-1 col-span-1">
+                          <label className="font-bold text-slate-600 uppercase block">Badge</label>
+                          <select
+                            value={newProduct.badge}
+                            onChange={(e) => setNewProduct({...newProduct, badge: e.target.value})}
+                            className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-pharm-500 bg-white"
+                          >
+                            <option value="Eco-Choice">Eco-Choice</option>
+                            <option value="Organic">Organic</option>
+                            <option value="New">New</option>
+                            <option value="Best Seller">Best Seller</option>
+                            <option value="Vegan Choice">Vegan Choice</option>
+                            <option value="Essential">Essential</option>
+                          </select>
+                        </div>
+
+                        <div className="space-y-1 col-span-1">
+                          <label className="font-bold text-slate-600 uppercase block">Icon (Emoji)</label>
+                          <select
+                            value={newProduct.icon}
+                            onChange={(e) => setNewProduct({...newProduct, icon: e.target.value})}
+                            className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-pharm-500 bg-white text-base"
+                          >
+                            <option value="🌿">🌿 Herbs</option>
+                            <option value="💊">💊 Pill</option>
+                            <option value="🍯">🍯 Honey</option>
+                            <option value="🌸">🌸 Flower</option>
+                            <option value="💧">💧 Drops</option>
+                            <option value="🧘">🧘 Yogi</option>
+                            <option value="☀️">☀️ Sun</option>
+                            <option value="🍎">🍎 Apple</option>
+                            <option value="⚡">⚡ Bolt</option>
+                            <option value="🍒">🍒 Cherry</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="font-bold text-slate-600 uppercase block">Description *</label>
+                        <textarea
+                          rows={2}
+                          required
+                          placeholder="Provide a detailed clinical description of the product benefits and raw source..."
+                          value={newProduct.description}
+                          onChange={(e) => setNewProduct({...newProduct, description: e.target.value})}
+                          className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-pharm-500"
+                        ></textarea>
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="font-bold text-slate-600 uppercase block">Product Features (comma separated)</label>
+                        <input
+                          type="text"
+                          placeholder="e.g. 100% Zinc, Vegan Capsule, Allergen-Free"
+                          value={newProduct.featuresRaw}
+                          onChange={(e) => setNewProduct({...newProduct, featuresRaw: e.target.value})}
+                          className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-pharm-500"
+                        />
+                      </div>
+
+                      <button
+                        type="submit"
+                        className="w-full py-2.5 bg-pharm-600 hover:bg-pharm-700 text-white font-bold rounded-lg shadow transition-colors"
+                      >
+                        Register Medication
+                      </button>
+                    </form>
+                  </div>
+
+                  {/* Product Inventory list */}
+                  <div className="space-y-3">
+                    <h4 className="font-bold text-slate-900 text-sm">Currently Active Products ({productsList.length})</h4>
+                    
+                    <div className="space-y-2 max-h-96 overflow-y-auto pr-1">
+                      {productsList.map((prod) => (
+                        <div
+                          key={prod.id}
+                          className="flex items-center justify-between p-3.5 bg-white border border-slate-100 rounded-xl shadow-xs"
+                        >
+                          <div className="flex items-center space-x-3 text-left">
+                            <span className="text-3xl bg-slate-50 p-1.5 rounded-lg border border-slate-100">{prod.icon}</span>
+                            <div>
+                              <span className="font-bold text-slate-950 text-sm block leading-tight">{prod.name}</span>
+                              <span className="text-[10px] text-slate-400 font-medium uppercase tracking-wider block mt-0.5">
+                                {prod.category} • ${prod.price.toFixed(2)}
+                              </span>
+                            </div>
+                          </div>
+
                           <button
-                            onClick={() => deleteSubmission(sub.id)}
-                            className="p-2 hover:bg-red-50 hover:text-red-500 rounded-lg text-slate-400 transition-colors"
-                            title="Delete"
+                            onClick={() => handleDeleteProduct(prod.id)}
+                            className="p-2 hover:bg-red-50 hover:text-red-500 text-slate-400 rounded-lg transition-colors flex-shrink-0"
+                            title="Remove from store"
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
                         </div>
-                      </div>
-
-                      <div className="mb-2">
-                        <span className="text-[10px] font-bold text-pharm-700 bg-pharm-100 px-2.5 py-0.5 rounded-full uppercase tracking-wider">
-                          {sub.subject}
-                        </span>
-                      </div>
-
-                      <p className="text-slate-600 text-xs leading-relaxed whitespace-pre-line bg-slate-50/50 p-3 rounded-xl border border-slate-100">
-                        {sub.message}
-                      </p>
-
-                      {sub.phone && sub.phone !== 'Not provided' && (
-                        <div className="mt-2 text-[11px] font-medium text-slate-500">
-                          📞 Phone: <span className="font-semibold text-slate-800">{sub.phone}</span>
-                        </div>
-                      )}
+                      ))}
                     </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-16 max-w-sm mx-auto space-y-3">
-                  <div className="bg-slate-50 text-slate-400 p-4 rounded-full inline-block">
-                    <Mail className="w-8 h-8" />
                   </div>
-                  <h4 className="font-bold text-slate-900">Inbox is empty</h4>
-                  <p className="text-xs text-slate-500">
-                    Submit the contact form on the home page to immediately see new clinical inquiries populate in this panel.
-                  </p>
                 </div>
               )}
+
             </div>
 
             {/* Footer */}
@@ -1197,7 +1490,7 @@ export default function App() {
               <div className="space-y-2 pt-2">
                 <span className="block text-[11px] font-extrabold text-slate-400 uppercase tracking-widest">Clinical Integrity</span>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  {selectedProduct.features.map((feature, idx) => (
+                  {selectedProduct.features && selectedProduct.features.map((feature, idx) => (
                     <div key={idx} className="flex items-center space-x-2 text-xs text-slate-700">
                       <div className="bg-pharm-100 text-pharm-700 p-0.5 rounded-full">
                         <Check className="w-3 h-3 stroke-[2.5]" />
