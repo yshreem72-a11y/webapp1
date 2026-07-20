@@ -4,6 +4,13 @@ import { products as initialProducts } from './data/products'
 import { services, testimonials, faqs } from './data/siteData'
 import confetti from 'canvas-confetti'
 import {
+  firebaseSignIn,
+  firebaseSignUp,
+  firebaseSignOut,
+  firebaseOnAuthStateChanged,
+  isRealFirebaseActive
+} from './firebase'
+import {
   Search,
   Mail,
   Phone,
@@ -27,7 +34,13 @@ import {
   Info,
   Plus,
   Package,
-  Inbox
+  Inbox,
+  LogOut,
+  Eye,
+  EyeOff,
+  Database,
+  Grid,
+  ExternalLink
 } from 'lucide-react'
 
 // Icon helper to render correct lucide icon from string name
@@ -49,11 +62,21 @@ const ServiceIcon = ({ name, className }) => {
 export default function App() {
   // Navigation & UI States
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
-  const [isAdminOpen, setIsAdminOpen] = useState(false)
+  const [isAuthViewOpen, setIsAuthViewOpen] = useState(false)
+  const [isDashboardActive, setIsDashboardActive] = useState(false) // Toggle whetherlogged-in user is viewing the Admin Dashboard
   const [selectedProduct, setSelectedProduct] = useState(null)
   
-  // Admin Drawer Tabs
-  const [adminActiveTab, setAdminActiveTab] = useState('inbox') // 'inbox' or 'inventory'
+  // Firebase Auth State
+  const [user, setUser] = useState(null)
+  const [authEmail, setAuthEmail] = useState('')
+  const [authPassword, setAuthPassword] = useState('')
+  const [authMode, setAuthMode] = useState('login') // 'login' or 'register'
+  const [authError, setAuthError] = useState('')
+  const [authLoading, setAuthLoading] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
+
+  // Dashboard Tab selection
+  const [dashboardTab, setDashboardTab] = useState('inventory') // 'inventory' or 'inbox'
 
   // Search & Filter States
   const [searchQuery, setSearchQuery] = useState('')
@@ -98,9 +121,19 @@ export default function App() {
   // Submissions (stored in localStorage)
   const [submissions, setSubmissions] = useState([])
 
-  // Load products and submissions from localStorage on mount
+  // Load products, submissions, and auth status on mount
   useEffect(() => {
-    // 1. Load submissions
+    // 1. Subscribe to Firebase Auth changes
+    const unsubscribe = firebaseOnAuthStateChanged((firebaseUser) => {
+      setUser(firebaseUser)
+      if (firebaseUser) {
+        setIsDashboardActive(true) // Auto go to dashboard when logged in
+      } else {
+        setIsDashboardActive(false)
+      }
+    })
+
+    // 2. Load submissions
     const savedSubmissions = localStorage.getItem('central_pharm_submissions')
     if (savedSubmissions) {
       try {
@@ -135,7 +168,7 @@ export default function App() {
       localStorage.setItem('central_pharm_submissions', JSON.stringify(initialSubmissions))
     }
 
-    // 2. Load inventory
+    // 3. Load inventory
     const savedInventory = localStorage.getItem('central_pharm_inventory')
     if (savedInventory) {
       try {
@@ -148,6 +181,8 @@ export default function App() {
       setProductsList(initialProducts)
       localStorage.setItem('central_pharm_inventory', JSON.stringify(initialProducts))
     }
+
+    return () => unsubscribe()
   }, [])
 
   // Auto scroll chat to bottom
@@ -156,6 +191,60 @@ export default function App() {
       chatEndRef.current.scrollIntoView({ behavior: 'smooth' })
     }
   }, [chatMessages, isChatOpen])
+
+  // Handle Firebase Login / Signup submission
+  const handleAuthSubmit = async (e) => {
+    e.preventDefault()
+    setAuthError('')
+    if (!authEmail.trim() || !authPassword.trim()) {
+      setAuthError('Please enter both email and password.')
+      return
+    }
+
+    setAuthLoading(true)
+    try {
+      if (authMode === 'login') {
+        await firebaseSignIn(authEmail, authPassword)
+        // Success
+        confetti({
+          particleCount: 80,
+          spread: 50,
+          colors: ['#4ade80', '#15803d']
+        })
+        setIsAuthViewOpen(false)
+        setAuthEmail('')
+        setAuthPassword('')
+      } else {
+        await firebaseSignUp(authEmail, authPassword)
+        // Success
+        confetti({
+          particleCount: 120,
+          spread: 60,
+          colors: ['#4ade80', '#bbf7d0', '#ffffff']
+        })
+        alert("Account successfully created with Firebase! Logged in as pharmacist.")
+        setIsAuthViewOpen(false)
+        setAuthEmail('')
+        setAuthPassword('')
+      }
+    } catch (err) {
+      console.error("Auth error details:", err)
+      const friendlyMessage = err.message.includes('auth/') 
+        ? err.message.split(' - ')[1] || err.message 
+        : err.message
+      setAuthError(friendlyMessage)
+    } finally {
+      setAuthLoading(false)
+    }
+  }
+
+  // Handle Firebase Logout
+  const handleLogout = async () => {
+    if (confirm("Sign out of the Pharmacist Portal?")) {
+      await firebaseSignOut()
+      setIsDashboardActive(false)
+    }
+  }
 
   // Handle Contact Form Submit
   const handleFormSubmit = (e) => {
@@ -225,8 +314,8 @@ export default function App() {
 
     // Pop tiny celebratory confetti
     confetti({
-      particleCount: 50,
-      spread: 40,
+      particleCount: 80,
+      spread: 50,
       colors: ['#86efac', '#22c55e']
     })
 
@@ -242,12 +331,12 @@ export default function App() {
       featuresRaw: '100% Organic, Vegan Capsules, Recyclable Jar'
     })
 
-    alert("Medication successfully registered into store inventory!")
+    alert("Medication registered successfully!")
   }
 
   // Handle Deleting Product
   const handleDeleteProduct = (productId) => {
-    if (confirm("Are you sure you want to remove this item from the active store? This cannot be undone.")) {
+    if (confirm("Are you sure you want to remove this item from the active storefront?")) {
       const updatedInventory = productsList.filter(p => p.id !== productId)
       setProductsList(updatedInventory)
       localStorage.setItem('central_pharm_inventory', JSON.stringify(updatedInventory))
@@ -312,6 +401,378 @@ export default function App() {
     localStorage.setItem('central_pharm_submissions', JSON.stringify(updated))
   }
 
+  // Render Admin Dashboard
+  if (isDashboardActive && user) {
+    return (
+      <div className="min-h-screen bg-[#f1f8f4] text-slate-800 flex flex-col justify-between selection:bg-pharm-200 selection:text-pharm-900 font-sans">
+        
+        {/* Dashboard Top Header */}
+        <header className="bg-white border-b border-pharm-100 shadow-sm sticky top-0 z-40">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+            {/* Branding */}
+            <div className="flex items-center space-x-3">
+              <div className="bg-pharm-600 text-white p-2.5 rounded-full shadow">
+                <ShieldCheck className="w-6 h-6" />
+              </div>
+              <div className="text-left">
+                <span className="text-xl font-black text-slate-900 block">Pharmacist Command Center</span>
+                <div className="flex items-center space-x-2">
+                  <span className="text-xs font-semibold text-pharm-700 block">
+                    Logged in: {user.displayName || user.email}
+                  </span>
+                  <span className={`text-[10px] font-bold px-1.5 py-0.2 rounded-md ${
+                    isRealFirebaseActive ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'
+                  }`}>
+                    {isRealFirebaseActive ? '🔥 Firebase Live' : '⚙️ Sandbox Mode'}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Dashboard Tabs for Wide Screen */}
+            <div className="hidden md:flex space-x-2 bg-slate-100 p-1.5 rounded-2xl border border-slate-200">
+              <button
+                onClick={() => setDashboardTab('inventory')}
+                className={`flex items-center space-x-2 px-6 py-2.5 rounded-xl text-xs font-bold transition-all ${
+                  dashboardTab === 'inventory'
+                    ? 'bg-white text-pharm-950 shadow-md'
+                    : 'text-slate-600 hover:text-slate-950'
+                }`}
+              >
+                <Package className="w-4 h-4" />
+                <span>📦 Manage Store Inventory ({productsList.length})</span>
+              </button>
+              <button
+                onClick={() => setDashboardTab('inbox')}
+                className={`flex items-center space-x-2 px-6 py-2.5 rounded-xl text-xs font-bold transition-all ${
+                  dashboardTab === 'inbox'
+                    ? 'bg-white text-pharm-950 shadow-md'
+                    : 'text-slate-600 hover:text-slate-950'
+                }`}
+              >
+                <Inbox className="w-4 h-4" />
+                <span>📬 Patient Inquiries ({submissions.length})</span>
+              </button>
+            </div>
+
+            {/* Controls */}
+            <div className="flex items-center space-x-3">
+              <button
+                onClick={() => setIsDashboardActive(false)}
+                className="flex items-center space-x-1.5 px-4 h-11 border border-slate-200 hover:bg-slate-50 text-slate-700 text-sm font-semibold rounded-xl transition-all shadow-sm"
+              >
+                <ExternalLink className="w-4 h-4" />
+                <span className="hidden sm:inline">Back to Live Site</span>
+              </button>
+
+              <button
+                onClick={handleLogout}
+                className="flex items-center justify-center bg-red-50 hover:bg-red-100 text-red-600 w-11 h-11 rounded-xl transition-colors shadow-sm"
+                title="Sign Out"
+              >
+                <LogOut className="w-5 h-5" />
+              </button>
+            </div>
+          </div>
+
+          {/* Mobile Tabs */}
+          <div className="md:hidden border-t border-slate-100 flex p-2 bg-slate-50">
+            <button
+              onClick={() => setDashboardTab('inventory')}
+              className={`flex-1 flex items-center justify-center space-x-1 py-3 text-xs font-extrabold rounded-xl transition-all ${
+                dashboardTab === 'inventory' ? 'bg-white text-pharm-950 shadow-sm border border-slate-200' : 'text-slate-500'
+              }`}
+            >
+              <Package className="w-4.5 h-4.5" />
+              <span>Inventory</span>
+            </button>
+            <button
+              onClick={() => setDashboardTab('inbox')}
+              className={`flex-1 flex items-center justify-center space-x-1 py-3 text-xs font-extrabold rounded-xl transition-all ${
+                dashboardTab === 'inbox' ? 'bg-white text-pharm-950 shadow-sm border border-slate-200' : 'text-slate-500'
+              }`}
+            >
+              <Inbox className="w-4.5 h-4.5" />
+              <span>Inquiries ({submissions.length})</span>
+            </button>
+          </div>
+        </header>
+
+        {/* Dashboard Main Grid Area */}
+        <main className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8 flex-1">
+          
+          {/* --- TAB 1: MANAGE INVENTORY VIEW --- */}
+          {dashboardTab === 'inventory' && (
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+              
+              {/* Left Column: Register Product form */}
+              <div className="lg:col-span-5 bg-white p-6 sm:p-8 rounded-3xl border border-pharm-100 shadow-xl shadow-pharm-100/10 text-left space-y-6">
+                <div>
+                  <h3 className="text-xl font-extrabold text-slate-900 flex items-center space-x-2">
+                    <Plus className="w-5 h-5 text-pharm-600" />
+                    <span>Register New Apothecary Medication</span>
+                  </h3>
+                  <p className="text-xs text-slate-500 mt-1">Register organic products instantly into the active customer storefront.</p>
+                </div>
+
+                <form onSubmit={handleAddProduct} className="space-y-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <label className="text-xs font-bold text-slate-600 uppercase block">Product Name *</label>
+                      <input
+                        type="text"
+                        required
+                        placeholder="e.g. Pure Zinc Defense"
+                        value={newProduct.name}
+                        onChange={(e) => setNewProduct({...newProduct, name: e.target.value})}
+                        className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-4 focus:ring-pharm-50 focus:bg-white focus:border-pharm-500 transition-all outline-none"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-xs font-bold text-slate-600 uppercase block">Category *</label>
+                      <select
+                        value={newProduct.category}
+                        onChange={(e) => setNewProduct({...newProduct, category: e.target.value})}
+                        className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-4 focus:ring-pharm-50 focus:bg-white focus:border-pharm-500 transition-all outline-none bg-white"
+                      >
+                        <option value="Medicines">Medicines</option>
+                        <option value="Supplements">Supplements</option>
+                        <option value="Vitamins">Vitamins</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-4">
+                    <div className="space-y-1 col-span-1">
+                      <label className="text-xs font-bold text-slate-600 uppercase block">Price ($) *</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        required
+                        placeholder="19.99"
+                        value={newProduct.price}
+                        onChange={(e) => setNewProduct({...newProduct, price: e.target.value})}
+                        className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-4 focus:ring-pharm-50 focus:bg-white focus:border-pharm-500 transition-all outline-none"
+                      />
+                    </div>
+
+                    <div className="space-y-1 col-span-1">
+                      <label className="text-xs font-bold text-slate-600 uppercase block">Badge</label>
+                      <select
+                        value={newProduct.badge}
+                        onChange={(e) => setNewProduct({...newProduct, badge: e.target.value})}
+                        className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-4 focus:ring-pharm-50 focus:bg-white focus:border-pharm-500 transition-all outline-none bg-white"
+                      >
+                        <option value="Eco-Choice">Eco-Choice</option>
+                        <option value="Organic">Organic</option>
+                        <option value="New">New</option>
+                        <option value="Best Seller">Best Seller</option>
+                        <option value="Vegan Choice">Vegan Choice</option>
+                        <option value="Essential">Essential</option>
+                      </select>
+                    </div>
+
+                    <div className="space-y-1 col-span-1">
+                      <label className="text-xs font-bold text-slate-600 uppercase block">Emoji Icon</label>
+                      <select
+                        value={newProduct.icon}
+                        onChange={(e) => setNewProduct({...newProduct, icon: e.target.value})}
+                        className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-4 focus:ring-pharm-50 focus:bg-white focus:border-pharm-500 transition-all outline-none bg-white text-base"
+                      >
+                        <option value="🌿">🌿 Herbs</option>
+                        <option value="💊">💊 Pill</option>
+                        <option value="🍯">🍯 Honey</option>
+                        <option value="🌸">🌸 Flower</option>
+                        <option value="💧">💧 Drops</option>
+                        <option value="🧘">🧘 Yogi</option>
+                        <option value="☀️">☀️ Sun</option>
+                        <option value="🍎">🍎 Apple</option>
+                        <option value="⚡">⚡ Bolt</option>
+                        <option value="🍒">🍒 Cherry</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold text-slate-600 uppercase block">Clinical Description *</label>
+                    <textarea
+                      rows={3}
+                      required
+                      placeholder="Write how this item is harvested and its clinical wellness benefits..."
+                      value={newProduct.description}
+                      onChange={(e) => setNewProduct({...newProduct, description: e.target.value})}
+                      className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-4 focus:ring-pharm-50 focus:bg-white focus:border-pharm-500 transition-all outline-none"
+                    ></textarea>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold text-slate-600 uppercase block">Key Features (comma separated)</label>
+                    <input
+                      type="text"
+                      placeholder="100% Organic, Vegan Capsules, Recyclable Jar"
+                      value={newProduct.featuresRaw}
+                      onChange={(e) => setNewProduct({...newProduct, featuresRaw: e.target.value})}
+                      className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-4 focus:ring-pharm-50 focus:bg-white focus:border-pharm-500 transition-all outline-none"
+                    />
+                  </div>
+
+                  <button
+                    type="submit"
+                    className="w-full py-3.5 bg-pharm-600 hover:bg-pharm-700 text-white font-bold rounded-xl shadow-md transition-colors text-sm"
+                  >
+                    Register Medication Info
+                  </button>
+                </form>
+              </div>
+
+              {/* Right Column: Inventory database directory list */}
+              <div className="lg:col-span-7 bg-white p-6 sm:p-8 rounded-3xl border border-pharm-100 shadow-xl shadow-pharm-100/10 text-left space-y-6">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                  <div>
+                    <h3 className="text-xl font-extrabold text-slate-900 flex items-center space-x-2">
+                      <Database className="w-5 h-5 text-pharm-600" />
+                      <span>Active Inventory Catalogue ({productsList.length} items)</span>
+                    </h3>
+                    <p className="text-xs text-slate-500 mt-1">Deregistering any medicine immediately removes it from the customer storefront.</p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-h-[600px] overflow-y-auto pr-1">
+                  {productsList.map((prod) => (
+                    <div
+                      key={prod.id}
+                      className="flex items-center justify-between p-4 bg-slate-50/50 border border-slate-100 hover:bg-slate-50 rounded-2xl transition-all"
+                    >
+                      <div className="flex items-center space-x-3 text-left overflow-hidden">
+                        <span className="text-4xl bg-white p-2 rounded-xl border border-slate-100 flex-shrink-0">{prod.icon}</span>
+                        <div className="overflow-hidden">
+                          <span className="font-bold text-slate-950 text-sm block leading-tight truncate">{prod.name}</span>
+                          <span className="text-[10px] text-pharm-700 font-extrabold uppercase tracking-wider block mt-1">
+                            {prod.category}
+                          </span>
+                          <span className="text-xs text-slate-500 font-bold block mt-0.5">${prod.price.toFixed(2)}</span>
+                        </div>
+                      </div>
+
+                      <button
+                        onClick={() => handleDeleteProduct(prod.id)}
+                        className="p-3 hover:bg-red-50 hover:text-red-500 text-slate-400 rounded-xl transition-colors flex-shrink-0"
+                        title="Remove product"
+                      >
+                        <Trash2 className="w-5 h-5" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+            </div>
+          )}
+
+          {/* --- TAB 2: PATIENT INBOX SUBMISSIONS VIEW --- */}
+          {dashboardTab === 'inbox' && (
+            <div className="bg-white p-6 sm:p-8 rounded-3xl border border-pharm-100 shadow-xl shadow-pharm-100/10 text-left space-y-6">
+              <div>
+                <h3 className="text-xl font-extrabold text-slate-900 flex items-center space-x-2">
+                  <Mail className="w-5 h-5 text-pharm-600" />
+                  <span>Clinical Submissions Inbox ({submissions.length} queries)</span>
+                </h3>
+                <p className="text-xs text-slate-500 mt-1">Check prescription transfers, compounding formulations, and clinical consultation requests.</p>
+              </div>
+
+              {submissions.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {submissions.map((sub) => (
+                    <div
+                      key={sub.id}
+                      className={`border rounded-2xl p-6 transition-all relative ${
+                        sub.status === 'Unread'
+                          ? 'bg-pharm-50/40 border-pharm-200 shadow-sm'
+                          : 'bg-white border-slate-100'
+                      }`}
+                    >
+                      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-4">
+                        <div>
+                          <span className="block font-bold text-slate-950 text-base">{sub.name}</span>
+                          <span className="text-xs text-slate-400 block mt-0.5">{sub.date}</span>
+                          <span className="text-xs font-semibold text-pharm-700 block mt-1">{sub.email}</span>
+                        </div>
+
+                        <div className="flex items-center space-x-2">
+                          <button
+                            onClick={() => toggleReadStatus(sub.id)}
+                            className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase transition-all ${
+                              sub.status === 'Unread'
+                                ? 'bg-amber-100 text-amber-800 hover:bg-amber-200'
+                                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                            }`}
+                          >
+                            {sub.status}
+                          </button>
+                          <button
+                            onClick={() => deleteSubmission(sub.id)}
+                            className="p-2.5 hover:bg-red-50 hover:text-red-500 rounded-xl text-slate-400 transition-colors"
+                            title="Delete query"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="mb-3">
+                        <span className="text-xs font-bold text-pharm-800 bg-pharm-100 px-3 py-1 rounded-full uppercase tracking-wider">
+                          {sub.subject}
+                        </span>
+                      </div>
+
+                      <p className="text-slate-700 text-sm leading-relaxed whitespace-pre-line bg-slate-50 p-4 rounded-xl border border-slate-100 font-medium">
+                        {sub.message}
+                      </p>
+
+                      {sub.phone && sub.phone !== 'Not provided' && (
+                        <div className="mt-3 text-xs font-medium text-slate-500">
+                          📞 Phone callback: <span className="font-bold text-slate-800">{sub.phone}</span>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-24 max-w-sm mx-auto space-y-4">
+                  <div className="bg-slate-50 text-slate-400 p-6 rounded-full inline-block border border-slate-100">
+                    <Inbox className="w-10 h-10" />
+                  </div>
+                  <h4 className="font-extrabold text-slate-900 text-lg">Inbox is completely empty</h4>
+                  <p className="text-sm text-slate-500">
+                    When a patient sends an inquiry from the homepage, it will register right here!
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+
+        </main>
+
+        {/* Dashboard Footer */}
+        <footer className="bg-white border-t border-slate-100 py-6 text-center text-xs text-slate-400">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <p>© {new Date().getFullYear()} Central Pharm. Secure Pharmacist Administration System.</p>
+            <button
+              onClick={() => setIsDashboardActive(false)}
+              className="text-pharm-700 hover:text-pharm-900 font-bold flex items-center space-x-1.5"
+            >
+              <span>View Customer Storefront</span>
+              <ArrowRight className="w-4.5 h-4.5" />
+            </button>
+          </div>
+        </footer>
+
+      </div>
+    )
+  }
+
+  // STANDARD PUBLIC MARKETING SITE (Default)
   return (
     <div className="relative min-h-screen selection:bg-pharm-200 selection:text-pharm-900">
       
@@ -323,7 +784,7 @@ export default function App() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-20">
             {/* Logo */}
-            <div className="flex items-center space-x-3 cursor-pointer group">
+            <div className="flex items-center space-x-3 cursor-pointer group" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
               <div className="bg-pharm-100 text-pharm-700 p-2.5 rounded-full shadow-inner group-hover:scale-110 transition-transform duration-300">
                 <Leaf className="w-6 h-6 fill-pharm-500/10" />
               </div>
@@ -341,17 +802,34 @@ export default function App() {
               <a href="#about" className="hover:text-pharm-700 transition-colors">About Us</a>
               <a href="#faq" className="hover:text-pharm-700 transition-colors">FAQs</a>
               <a href="#contact" className="hover:text-pharm-700 transition-colors">Contact</a>
+              
+              {/* Only displays if pharmacist is logged in */}
+              {user && (
+                <button
+                  onClick={() => setIsDashboardActive(true)}
+                  className="text-pharm-700 hover:text-pharm-900 font-bold flex items-center space-x-1 bg-pharm-50 px-3 py-1 rounded-lg animate-pulse"
+                >
+                  <Grid className="w-4 h-4" />
+                  <span>Dashboard</span>
+                </button>
+              )}
             </nav>
 
             {/* CTA & Admin Buttons */}
             <div className="hidden md:flex items-center space-x-4">
               <button
-                onClick={() => setIsAdminOpen(true)}
+                onClick={() => {
+                  if (user) {
+                    setIsDashboardActive(true)
+                  } else {
+                    setIsAuthViewOpen(true)
+                  }
+                }}
                 className="flex items-center space-x-1.5 px-4 h-11 border border-pharm-200 rounded-full text-sm font-semibold text-pharm-700 hover:bg-pharm-50 transition-all shadow-sm"
               >
                 <Lock className="w-4 h-4" />
-                <span>Pharmacist Panel</span>
-                {submissions.filter(s => s.status === 'Unread').length > 0 && (
+                <span>{user ? 'Staff Panel' : 'Pharmacist Login'}</span>
+                {!user && submissions.filter(s => s.status === 'Unread').length > 0 && (
                   <span className="bg-emerald-500 text-white text-[10px] w-5 h-5 flex items-center justify-center rounded-full font-bold animate-pulse">
                     {submissions.filter(s => s.status === 'Unread').length}
                   </span>
@@ -369,12 +847,18 @@ export default function App() {
             {/* Mobile Menu Button */}
             <div className="md:hidden flex items-center space-x-2">
               <button
-                onClick={() => setIsAdminOpen(true)}
+                onClick={() => {
+                  if (user) {
+                    setIsDashboardActive(true)
+                  } else {
+                    setIsAuthViewOpen(true)
+                  }
+                }}
                 className="relative p-2 text-pharm-700 hover:bg-pharm-50 rounded-full"
-                title="Admin Inbox"
+                title="Staff Portal"
               >
                 <Lock className="w-5 h-5" />
-                {submissions.filter(s => s.status === 'Unread').length > 0 && (
+                {!user && submissions.filter(s => s.status === 'Unread').length > 0 && (
                   <span className="absolute -top-1 -right-1 bg-emerald-500 text-white text-[9px] w-4 h-4 flex items-center justify-center rounded-full font-bold">
                     {submissions.filter(s => s.status === 'Unread').length}
                   </span>
@@ -400,6 +884,16 @@ export default function App() {
               <a href="#about" onClick={() => setIsMobileMenuOpen(false)} className="block px-3 py-2 rounded-lg text-base font-semibold hover:bg-pharm-50 text-pharm-950">About Us</a>
               <a href="#faq" onClick={() => setIsMobileMenuOpen(false)} className="block px-3 py-2 rounded-lg text-base font-semibold hover:bg-pharm-50 text-pharm-950">FAQs</a>
               <a href="#contact" onClick={() => setIsMobileMenuOpen(false)} className="block px-3 py-2 rounded-lg text-base font-semibold hover:bg-pharm-50 text-pharm-950">Contact</a>
+              
+              {user && (
+                <button
+                  onClick={() => { setIsMobileMenuOpen(false); setIsDashboardActive(true); }}
+                  className="w-full text-left px-3 py-2 rounded-lg text-base font-bold text-pharm-800 bg-pharm-50"
+                >
+                  Go to Dashboard
+                </button>
+              )}
+
               <div className="pt-2">
                 <a
                   href="#products"
@@ -1042,320 +1536,119 @@ export default function App() {
         </div>
       </footer>
 
-      {/* --- PHARMACIST ADMIN DISPATCH CONTROL Drawer --- */}
-      {isAdminOpen && (
-        <div className="fixed inset-0 z-50 overflow-hidden flex justify-end">
-          {/* Backdrop */}
-          <div
-            onClick={() => setIsAdminOpen(false)}
-            className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity"
-          ></div>
+      {/* --- SLIDING FIREBASE LOGIN/REGISTER MODAL OVERLAY --- */}
+      {isAuthViewOpen && (
+        <div className="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center p-4">
+          <div onClick={() => { setIsAuthViewOpen(false); setAuthError(''); }} className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm"></div>
 
-          {/* Drawer container */}
-          <div className="relative w-full max-w-2xl bg-white h-full shadow-2xl flex flex-col justify-between z-10 border-l border-slate-100 animate-slideLeft">
-            
-            {/* Header */}
-            <div className="p-6 border-b border-slate-100 bg-pharm-50">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center space-x-2.5">
-                  <div className="bg-pharm-600 text-white p-2 rounded-xl shadow">
-                    <ShieldCheck className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h3 className="font-extrabold text-slate-950 text-lg">Pharmacist Dispatch Control</h3>
-                    <span className="text-xs font-semibold text-pharm-700 block">Reviewing queries & active inventory CMS</span>
+          <div className="relative bg-white max-w-md w-full rounded-3xl p-8 shadow-2xl border border-slate-100 text-left animate-scaleUp z-10">
+            <button
+              onClick={() => { setIsAuthViewOpen(false); setAuthError(''); }}
+              className="absolute top-4 right-4 p-1.5 hover:bg-slate-100 text-slate-400 hover:text-slate-600 rounded-full transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="space-y-6">
+              <div className="text-center space-y-2">
+                <div className="bg-pharm-100 text-pharm-700 p-3 rounded-2xl inline-block shadow-inner mb-2">
+                  <Lock className="w-6 h-6" />
+                </div>
+                <h3 className="text-2xl font-extrabold text-slate-900">
+                  {authMode === 'login' ? 'Registered Pharmacist Portal' : 'Register New Staff Profile'}
+                </h3>
+                <p className="text-xs text-slate-500 leading-relaxed">
+                  {authMode === 'login' 
+                    ? 'Access your clinical prescription inquiries & stock inventory CMS.' 
+                    : 'Create a certified credentials profile connected to your Firebase project.'}
+                </p>
+                
+                {/* Mode toggle badge */}
+                <span className={`text-[10px] font-bold inline-block px-2.5 py-0.5 rounded-full ${
+                  isRealFirebaseActive ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'
+                }`}>
+                  {isRealFirebaseActive ? '🔥 Connected to production Firebase' : '⚙️ Operating in sandbox mode'}
+                </span>
+              </div>
+
+              {authError && (
+                <div className="bg-red-50 border border-red-200 p-3.5 rounded-xl flex items-start space-x-2.5 text-xs text-red-700">
+                  <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                  <p>{authError}</p>
+                </div>
+              )}
+
+              {/* Input Form */}
+              <form onSubmit={handleAuthSubmit} className="space-y-4">
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-slate-600 uppercase block">Pharmacist Email</label>
+                  <input
+                    type="email"
+                    required
+                    placeholder="e.g. pharmacist@centralpharm.com"
+                    value={authEmail}
+                    onChange={(e) => setAuthEmail(e.target.value)}
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-4 focus:ring-pharm-100 focus:bg-white focus:border-pharm-500 transition-all outline-none"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-slate-600 uppercase block">Secret Password</label>
+                  <div className="relative">
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      required
+                      placeholder="••••••••"
+                      value={authPassword}
+                      onChange={(e) => setAuthPassword(e.target.value)}
+                      className="w-full pl-4 pr-11 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-4 focus:ring-pharm-100 focus:bg-white focus:border-pharm-500 transition-all outline-none"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute inset-y-0 right-4 flex items-center text-slate-400 hover:text-slate-600"
+                    >
+                      {showPassword ? <EyeOff className="w-4.5 h-4.5" /> : <Eye className="w-4.5 h-4.5" />}
+                    </button>
                   </div>
                 </div>
+
                 <button
-                  onClick={() => setIsAdminOpen(false)}
-                  className="p-1.5 hover:bg-slate-200/50 rounded-full text-slate-400 hover:text-slate-600 transition-colors"
+                  type="submit"
+                  disabled={authLoading}
+                  className="w-full py-3.5 bg-pharm-600 hover:bg-pharm-700 disabled:opacity-50 text-white font-bold rounded-xl shadow-md transition-colors text-sm flex items-center justify-center space-x-2"
                 >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-
-              {/* Panel Tabs */}
-              <div className="flex space-x-2 p-1 bg-pharm-100 rounded-xl border border-pharm-200">
-                <button
-                  onClick={() => setAdminActiveTab('inbox')}
-                  className={`flex-1 flex items-center justify-center space-x-2 py-2.5 rounded-lg text-xs font-bold transition-all ${
-                    adminActiveTab === 'inbox'
-                      ? 'bg-white text-pharm-950 shadow-sm'
-                      : 'text-pharm-700 hover:text-pharm-900'
-                  }`}
-                >
-                  <Inbox className="w-4 h-4" />
-                  <span>Customer Inbox ({submissions.length})</span>
-                </button>
-                <button
-                  onClick={() => setAdminActiveTab('inventory')}
-                  className={`flex-1 flex items-center justify-center space-x-2 py-2.5 rounded-lg text-xs font-bold transition-all ${
-                    adminActiveTab === 'inventory'
-                      ? 'bg-white text-pharm-950 shadow-sm'
-                      : 'text-pharm-700 hover:text-pharm-900'
-                  }`}
-                >
-                  <Package className="w-4 h-4" />
-                  <span>Store Inventory ({productsList.length})</span>
-                </button>
-              </div>
-            </div>
-
-            {/* List scroll based on active tab */}
-            <div className="p-6 overflow-y-auto flex-1 space-y-6">
-              
-              {/* --- INBOX TAB --- */}
-              {adminActiveTab === 'inbox' && (
-                <div className="space-y-6">
-                  <div className="bg-slate-50 border border-slate-200/60 p-4 rounded-2xl flex items-start space-x-3 text-slate-600 text-xs leading-relaxed">
-                    <Info className="w-4 h-4 text-slate-500 mt-0.5 flex-shrink-0" />
-                    <p>
-                      This dashboard retrieves customer inquiries securely from <strong>localStorage</strong>. Submit the Contact Form on the homepage to see submissions populate immediately in real-time.
-                    </p>
-                  </div>
-
-                  {submissions.length > 0 ? (
-                    <div className="space-y-4">
-                      {submissions.map((sub) => (
-                        <div
-                          key={sub.id}
-                          className={`border rounded-2xl p-5 text-left transition-all relative ${
-                            sub.status === 'Unread'
-                              ? 'bg-pharm-50/40 border-pharm-200 shadow-sm'
-                              : 'bg-white border-slate-100'
-                          }`}
-                        >
-                          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3">
-                            <div>
-                              <span className="block font-bold text-slate-950 text-base">{sub.name}</span>
-                              <span className="text-xs text-slate-400 block">{sub.date} • {sub.email}</span>
-                            </div>
-                            <div className="flex items-center space-x-2">
-                              <button
-                                onClick={() => toggleReadStatus(sub.id)}
-                                className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase transition-all ${
-                                  sub.status === 'Unread'
-                                    ? 'bg-amber-100 text-amber-800'
-                                    : 'bg-slate-100 text-slate-600'
-                                }`}
-                              >
-                                {sub.status}
-                              </button>
-                              <button
-                                onClick={() => deleteSubmission(sub.id)}
-                                className="p-2 hover:bg-red-50 hover:text-red-500 rounded-lg text-slate-400 transition-colors"
-                                title="Delete"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </button>
-                            </div>
-                          </div>
-
-                          <div className="mb-2">
-                            <span className="text-[10px] font-bold text-pharm-700 bg-pharm-100 px-2.5 py-0.5 rounded-full uppercase tracking-wider">
-                              {sub.subject}
-                            </span>
-                          </div>
-
-                          <p className="text-slate-600 text-xs leading-relaxed whitespace-pre-line bg-slate-50/50 p-3 rounded-xl border border-slate-100">
-                            {sub.message}
-                          </p>
-
-                          {sub.phone && sub.phone !== 'Not provided' && (
-                            <div className="mt-2 text-[11px] font-medium text-slate-500">
-                              📞 Phone: <span className="font-semibold text-slate-800">{sub.phone}</span>
-                            </div>
-                          )}
-                        </div>
-                      ))}
-                    </div>
+                  {authLoading ? (
+                    <span>Authenticating credentials...</span>
                   ) : (
-                    <div className="text-center py-16 max-w-sm mx-auto space-y-3">
-                      <div className="bg-slate-50 text-slate-400 p-4 rounded-full inline-block">
-                        <Mail className="w-8 h-8" />
-                      </div>
-                      <h4 className="font-bold text-slate-900">Inbox is empty</h4>
-                      <p className="text-xs text-slate-500">
-                        Inquiries from patients will display here immediately.
-                      </p>
-                    </div>
+                    <>
+                      <Lock className="w-4 h-4" />
+                      <span>{authMode === 'login' ? 'Authenticate Profile' : 'Register Profile'}</span>
+                    </>
                   )}
-                </div>
-              )}
+                </button>
+              </form>
 
-              {/* --- INVENTORY CMS TAB --- */}
-              {adminActiveTab === 'inventory' && (
-                <div className="space-y-6">
-                  {/* Explainer */}
-                  <div className="bg-slate-50 border border-slate-200/60 p-4 rounded-2xl flex items-start space-x-3 text-slate-600 text-xs leading-relaxed">
-                    <Info className="w-4 h-4 text-slate-500 mt-0.5 flex-shrink-0" />
-                    <p>
-                      <strong>Active CMS Panel</strong>: Register or deregister medicines from the active storefront. Deleting or adding products here immediately updates the catalog listings above in real-time.
-                    </p>
-                  </div>
-
-                  {/* Add Product Form */}
-                  <div className="bg-pharm-50/30 border border-pharm-100 p-5 rounded-2xl text-left space-y-4">
-                    <h4 className="font-bold text-slate-900 text-sm flex items-center space-x-1.5">
-                      <Plus className="w-4 h-4 text-pharm-600" />
-                      <span>Register New Apothecary Item</span>
-                    </h4>
-
-                    <form onSubmit={handleAddProduct} className="space-y-3 text-xs">
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <div className="space-y-1">
-                          <label className="font-bold text-slate-600 uppercase block">Product Name *</label>
-                          <input
-                            type="text"
-                            required
-                            placeholder="e.g. Eco-Zinc Booster"
-                            value={newProduct.name}
-                            onChange={(e) => setNewProduct({...newProduct, name: e.target.value})}
-                            className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-pharm-500"
-                          />
-                        </div>
-
-                        <div className="space-y-1">
-                          <label className="font-bold text-slate-600 uppercase block">Category *</label>
-                          <select
-                            value={newProduct.category}
-                            onChange={(e) => setNewProduct({...newProduct, category: e.target.value})}
-                            className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-pharm-500 bg-white"
-                          >
-                            <option value="Medicines">Medicines</option>
-                            <option value="Supplements">Supplements</option>
-                            <option value="Vitamins">Vitamins</option>
-                          </select>
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-3 gap-3">
-                        <div className="space-y-1 col-span-1">
-                          <label className="font-bold text-slate-600 uppercase block">Price ($) *</label>
-                          <input
-                            type="number"
-                            step="0.01"
-                            required
-                            placeholder="19.99"
-                            value={newProduct.price}
-                            onChange={(e) => setNewProduct({...newProduct, price: e.target.value})}
-                            className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-pharm-500"
-                          />
-                        </div>
-
-                        <div className="space-y-1 col-span-1">
-                          <label className="font-bold text-slate-600 uppercase block">Badge</label>
-                          <select
-                            value={newProduct.badge}
-                            onChange={(e) => setNewProduct({...newProduct, badge: e.target.value})}
-                            className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-pharm-500 bg-white"
-                          >
-                            <option value="Eco-Choice">Eco-Choice</option>
-                            <option value="Organic">Organic</option>
-                            <option value="New">New</option>
-                            <option value="Best Seller">Best Seller</option>
-                            <option value="Vegan Choice">Vegan Choice</option>
-                            <option value="Essential">Essential</option>
-                          </select>
-                        </div>
-
-                        <div className="space-y-1 col-span-1">
-                          <label className="font-bold text-slate-600 uppercase block">Icon (Emoji)</label>
-                          <select
-                            value={newProduct.icon}
-                            onChange={(e) => setNewProduct({...newProduct, icon: e.target.value})}
-                            className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-pharm-500 bg-white text-base"
-                          >
-                            <option value="🌿">🌿 Herbs</option>
-                            <option value="💊">💊 Pill</option>
-                            <option value="🍯">🍯 Honey</option>
-                            <option value="🌸">🌸 Flower</option>
-                            <option value="💧">💧 Drops</option>
-                            <option value="🧘">🧘 Yogi</option>
-                            <option value="☀️">☀️ Sun</option>
-                            <option value="🍎">🍎 Apple</option>
-                            <option value="⚡">⚡ Bolt</option>
-                            <option value="🍒">🍒 Cherry</option>
-                          </select>
-                        </div>
-                      </div>
-
-                      <div className="space-y-1">
-                        <label className="font-bold text-slate-600 uppercase block">Description *</label>
-                        <textarea
-                          rows={2}
-                          required
-                          placeholder="Provide a detailed clinical description of the product benefits and raw source..."
-                          value={newProduct.description}
-                          onChange={(e) => setNewProduct({...newProduct, description: e.target.value})}
-                          className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-pharm-500"
-                        ></textarea>
-                      </div>
-
-                      <div className="space-y-1">
-                        <label className="font-bold text-slate-600 uppercase block">Product Features (comma separated)</label>
-                        <input
-                          type="text"
-                          placeholder="e.g. 100% Zinc, Vegan Capsule, Allergen-Free"
-                          value={newProduct.featuresRaw}
-                          onChange={(e) => setNewProduct({...newProduct, featuresRaw: e.target.value})}
-                          className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-pharm-500"
-                        />
-                      </div>
-
-                      <button
-                        type="submit"
-                        className="w-full py-2.5 bg-pharm-600 hover:bg-pharm-700 text-white font-bold rounded-lg shadow transition-colors"
-                      >
-                        Register Medication
-                      </button>
-                    </form>
-                  </div>
-
-                  {/* Product Inventory list */}
-                  <div className="space-y-3">
-                    <h4 className="font-bold text-slate-900 text-sm">Currently Active Products ({productsList.length})</h4>
-                    
-                    <div className="space-y-2 max-h-96 overflow-y-auto pr-1">
-                      {productsList.map((prod) => (
-                        <div
-                          key={prod.id}
-                          className="flex items-center justify-between p-3.5 bg-white border border-slate-100 rounded-xl shadow-xs"
-                        >
-                          <div className="flex items-center space-x-3 text-left">
-                            <span className="text-3xl bg-slate-50 p-1.5 rounded-lg border border-slate-100">{prod.icon}</span>
-                            <div>
-                              <span className="font-bold text-slate-950 text-sm block leading-tight">{prod.name}</span>
-                              <span className="text-[10px] text-slate-400 font-medium uppercase tracking-wider block mt-0.5">
-                                {prod.category} • ${prod.price.toFixed(2)}
-                              </span>
-                            </div>
-                          </div>
-
-                          <button
-                            onClick={() => handleDeleteProduct(prod.id)}
-                            className="p-2 hover:bg-red-50 hover:text-red-500 text-slate-400 rounded-lg transition-colors flex-shrink-0"
-                            title="Remove from store"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              )}
-
-            </div>
-
-            {/* Footer */}
-            <div className="p-6 border-t border-slate-100 bg-slate-50/80 text-center">
-              <button
-                onClick={() => setIsAdminOpen(false)}
-                className="w-full py-3 border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-bold rounded-xl text-sm transition-colors shadow-sm"
-              >
-                Close Control Panel
-              </button>
+              {/* Footer switch modes */}
+              <div className="text-center text-xs space-y-2 border-t border-slate-100 pt-4">
+                <button
+                  onClick={() => {
+                    setAuthMode(authMode === 'login' ? 'register' : 'login');
+                    setAuthError('');
+                  }}
+                  className="text-pharm-700 hover:text-pharm-900 font-bold"
+                >
+                  {authMode === 'login' 
+                    ? 'No staff account? Register profile' 
+                    : 'Already registered? Login to portal'}
+                </button>
+                
+                {!isRealFirebaseActive && authMode === 'login' && (
+                  <p className="text-[10px] text-slate-400 leading-normal max-w-xs mx-auto">
+                    Sandbox Helper: Sign in instantly with <strong className="text-slate-700 block">email: pharmacist@centralpharm.com password: password123</strong>
+                  </p>
+                )}
+              </div>
             </div>
           </div>
         </div>
