@@ -4,7 +4,7 @@
 
 @layer base {
   body {
-    @apply bg-[#030904] text-slate-100 antialiased overflow-x-hidden;
+    @apply bg-[#052410] text-white antialiased overflow-x-hidden;
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
   }
 }
@@ -64,22 +64,21 @@
   animation: pulseGlow 2.5s ease-in-out infinite;
 }
 
-/* Custom Scrollbar for a premium biotech neon feel */
+/* Custom Scrollbar for a premium dark green and white feel */
 ::-webkit-scrollbar {
   width: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #030a04;
+  background: #031509;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #022d12;
+  background: #ffffff;
   border: 1px solid #00ff66;
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #00e65c;
-  box-shadow: 0 0 8px #00ff66;
+  background: #00ff66;
 }

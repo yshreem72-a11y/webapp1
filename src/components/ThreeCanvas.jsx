@@ -27,21 +27,19 @@ function useScrollPercent() {
 function CapsuleModel({ scrollPercent, index, initialPos }) {
   const meshRef = useRef()
   
-  // High-tech, metallic, glowing pills
+  // Capsules styled in half crisp white and half deep forest green / glowing green!
   const pillMaterial1 = useMemo(() => new THREE.MeshStandardMaterial({
-    color: '#00ff66', // Glowing neon green
-    roughness: 0.05,
-    metalness: 0.8,
-    emissive: '#004d1f',
-    emissiveIntensity: 0.5,
+    color: '#00ff66', // Glowing biotech green
+    roughness: 0.1,
+    metalness: 0.6,
+    emissive: '#003311',
+    emissiveIntensity: 0.3,
   }), [])
   
   const pillMaterial2 = useMemo(() => new THREE.MeshStandardMaterial({
-    color: '#0d1f11', // Metallic deep black-green
-    roughness: 0.05,
-    metalness: 0.9,
-    emissive: '#030a04',
-    emissiveIntensity: 0.2,
+    color: '#ffffff', // Crisp clinical white
+    roughness: 0.1,
+    metalness: 0.2,
   }), [])
 
   useFrame((state) => {
@@ -104,25 +102,25 @@ function DNAHelix({ scrollPercent }) {
   const heightStep = 0.4
   const rotationPerStep = 0.4
 
-  // Glowing neon/biotech helix nodes
+  // Glowing white and forest green double-helix nodes
   const materialRed = useMemo(() => new THREE.MeshStandardMaterial({
-    color: '#00ff66', // Pure vibrant green
+    color: '#ffffff', // Crisp white nodes
     roughness: 0.1,
-    metalness: 0.5,
-    emissive: '#00ff66',
-    emissiveIntensity: 0.6
+    metalness: 0.2,
+    emissive: '#333333',
+    emissiveIntensity: 0.2
   }), [])
 
   const materialBlue = useMemo(() => new THREE.MeshStandardMaterial({
-    color: '#00cc44', // Darker rich green
+    color: '#00ff66', // Glowing biotech green nodes
     roughness: 0.1,
     metalness: 0.5,
-    emissive: '#00802b',
-    emissiveIntensity: 0.3
+    emissive: '#00aa44',
+    emissiveIntensity: 0.4
   }), [])
 
   const materialBar = useMemo(() => new THREE.MeshStandardMaterial({
-    color: '#1a3a22', // Metallic dark green forest
+    color: '#0a3a14', // Deep forest green connecting bars
     roughness: 0.2,
     metalness: 0.8
   }), [])
@@ -237,17 +235,17 @@ function WellnessParticles({ scrollPercent }) {
         />
       </bufferGeometry>
       <pointsMaterial
-        color="#00ff66" // Bright neon green particles
+        color="#ffffff" // Clean white floating particles representing pure cells
         size={0.12}
         transparent
-        opacity={0.7}
+        opacity={0.8}
         sizeAttenuation
       />
     </points>
   )
 }
 
-// Main ThreeJS Canvas Component with dark ambient settings
+// Main ThreeJS Canvas Component with dark green ambient settings
 export default function ThreeCanvas() {
   const scrollPercent = useScrollPercent()
   const [isMobile, setIsMobile] = useState(false)
@@ -267,14 +265,13 @@ export default function ThreeCanvas() {
         camera={{ position: [0, 0, 6], fov: 60 }}
         gl={{ antialias: true }}
         onCreated={({ gl }) => {
-          gl.setClearColor(new THREE.Color('#030904'), 1) // Dark obsidian-green background
+          gl.setClearColor(new THREE.Color('#052410'), 1) // Deep medical forest green background
         }}
       >
-        <ambientLight intensity={0.4} />
-        {/* Spot/Directional light cast to make metals shiny */}
-        <directionalLight position={[5, 10, 5]} intensity={3.0} castShadow />
-        <pointLight position={[-5, -5, -5]} intensity={1.0} color="#00ff66" />
-        <pointLight position={[3, 3, 3]} intensity={1.5} color="#ffffff" />
+        <ambientLight intensity={0.5} />
+        <directionalLight position={[5, 10, 5]} intensity={3.5} castShadow />
+        <pointLight position={[-5, -5, -5]} intensity={1.5} color="#00ff66" />
+        <pointLight position={[3, 3, 3]} intensity={2.0} color="#ffffff" />
 
         {/* Floating Pills */}
         {!isMobile && (
