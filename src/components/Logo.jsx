@@ -1,38 +1,38 @@
 import React from 'react'
 
-export default function Logo({ className = "h-10", textClassName = "text-white" }) {
+export default function Logo({ className = "h-11", textClassName = "" }) {
   return (
-    <div className={`flex items-center space-x-3 select-none ${className}`}>
-      {/* SVG Icon: High fidelity recreation of the Central Pharm pill-circle logo */}
+    <div className={`flex items-center space-x-2 select-none ${className}`}>
+      {/* SVG Icon: Exact high fidelity replication of the Central Pharm logo */}
       <svg
         viewBox="0 0 100 100"
-        className="w-12 h-12 flex-shrink-0 filter drop-shadow-[0_0_8px_rgba(0,255,102,0.25)]"
+        className="w-11 h-11 flex-shrink-0"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
       >
-        {/* Outer C-ring representing Central */}
+        {/* Outer Grass-Green C-ring (Hex: #00ab44) */}
         <circle
           cx="50"
           cy="50"
           r="40"
-          stroke="#00ff66"
+          stroke="#00ab44"
           strokeWidth="11"
-          strokeDasharray="210 50" // Gives it a slight opening on the right representing a C
+          strokeDasharray="210 50" // Perfect 'C' gap on the right
           strokeLinecap="round"
           transform="rotate(-40 50 50)"
         />
         
-        {/* Inner pill-circle divided diagonally */}
-        <mask id="pill-mask">
+        {/* Inner Pill-Circle (Hex: #00828a - Dark Teal) divided diagonally (top-left to bottom-right) */}
+        <mask id="pill-mask-precise">
           <circle cx="50" cy="50" r="28" fill="white" />
-          {/* Diagonal divide line */}
+          {/* Diagonal divide line (Top-left to Bottom-right) */}
           <line
             x1="20"
-            y1="80"
+            y1="20"
             x2="80"
-            y2="20"
+            y2="80"
             stroke="black"
-            strokeWidth="7"
+            strokeWidth="8"
           />
         </mask>
         
@@ -40,17 +40,17 @@ export default function Logo({ className = "h-10", textClassName = "text-white" 
           cx="50"
           cy="50"
           r="28"
-          fill="#00aa44"
-          mask="url(#pill-mask)"
+          fill="#00828a"
+          mask="url(#pill-mask-precise)"
         />
       </svg>
       
-      {/* Logo Text Typography */}
-      <div className="text-left font-sans">
-        <span className={`text-2xl font-black tracking-tight leading-none block ${textClassName}`}>
-          <span className="text-[#00ff66]">C</span>ENTRAL
+      {/* Logo Typography matching image exactly */}
+      <div className="text-left font-sans flex flex-col justify-center">
+        <span className="text-[25px] font-black tracking-tight leading-none text-[#00ab44] block">
+          ENTRAL
         </span>
-        <span className="text-[10px] font-black uppercase tracking-widest text-[#00ff66] block -mt-1 leading-none">
+        <span className="text-[14px] font-black uppercase tracking-[0.22em] text-[#00828a] block -mt-0.5 leading-none">
           PHARM
         </span>
       </div>

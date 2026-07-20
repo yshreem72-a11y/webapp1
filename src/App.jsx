@@ -42,8 +42,8 @@ import {
   Database,
   Grid,
   ExternalLink,
-  ShieldAlert as SecurityIcon,
-  KeyRound
+  KeyRound,
+  Filter
 } from 'lucide-react'
 
 // Icon helper to render correct lucide icon from string name
@@ -79,7 +79,7 @@ export default function App() {
   const [authLoading, setAuthLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
 
-  // REAL SECURE STAFF INVITATION CODE (updated to match user requirements)
+  // REAL SECURE STAFF INVITATION CODE
   const SECRET_STAFF_INVITATION_CODE = "31051982"
 
   // Dashboard Tab selection
@@ -88,6 +88,10 @@ export default function App() {
   // Search & Filter States
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('All')
+  const [selectedTag, setSelectedTag] = useState('All') // Dynamic tag-pill filter state!
+
+  // List of all active benefit tags for advanced tag filter pills
+  const availableTags = ['All', 'Longevity', 'Energy', 'Sleep', 'Defense', 'Cognitive', 'Repair']
 
   // Live Chat Simulator State
   const [isChatOpen, setIsChatOpen] = useState(false)
@@ -108,11 +112,12 @@ export default function App() {
     name: '',
     category: 'Medicines',
     price: '',
-    badge: 'Eco-Choice',
-    icon: '🌿',
+    badge: 'Bio-Hacking',
+    image: 'https://images.unsplash.com/photo-1584017911766-d451b3d0e843?auto=format&fit=crop&q=80&w=600', // Pre-filled premium Unsplash placeholder URL!
     description: '',
     rating: '5.0',
-    featuresRaw: '100% Organic, Vegan Capsules, Recyclable Jar'
+    featuresRaw: 'HPLC Tested, Intracellular Carrier, Liposomal',
+    tagsRaw: 'Longevity, Energy' // Comma-separated tags
   })
 
   // Contact Form States
@@ -317,6 +322,11 @@ export default function App() {
       .map(f => f.trim())
       .filter(f => f.length > 0)
 
+    const tags = newProduct.tagsRaw
+      .split(',')
+      .map(t => t.trim())
+      .filter(t => t.length > 0)
+
     const newlyCreatedItem = {
       id: `prod-${Date.now()}`,
       name: newProduct.name,
@@ -324,9 +334,10 @@ export default function App() {
       price: parseFloat(newProduct.price) || 0,
       rating: parseFloat(newProduct.rating) || 5.0,
       badge: newProduct.badge,
-      icon: newProduct.icon,
+      image: newProduct.image || 'https://images.unsplash.com/photo-1584017911766-d451b3d0e843?auto=format&fit=crop&q=80&w=600', // Defaults to our premium container photo
       description: newProduct.description,
-      features: features.length > 0 ? features : ["100% Pure", "Lab-tested"]
+      features: features.length > 0 ? features : ["100% Pure", "Lab-tested"],
+      tags: tags.length > 0 ? tags : ["Wellness", "Longevity"]
     }
 
     const updatedInventory = [newlyCreatedItem, ...productsList]
@@ -345,11 +356,12 @@ export default function App() {
       name: '',
       category: 'Medicines',
       price: '',
-      badge: 'Eco-Choice',
-      icon: '🌿',
+      badge: 'Bio-Hacking',
+      image: 'https://images.unsplash.com/photo-1584017911766-d451b3d0e843?auto=format&fit=crop&q=80&w=600',
       description: '',
       rating: '5.0',
-      featuresRaw: '100% Organic, Vegan Capsules, Recyclable Jar'
+      featuresRaw: 'HPLC Tested, Intracellular Carrier, Liposomal',
+      tagsRaw: 'Longevity, Energy'
     })
 
     alert("Medication registered successfully!")
@@ -394,13 +406,17 @@ export default function App() {
     }, 1200)
   }
 
-  // Filter and Search Products
+  // Filter and Search Products by category, keyword query AND active tag-pill!
   const filteredProducts = productsList.filter(product => {
     const matchesCategory = selectedCategory === 'All' || product.category === selectedCategory
+    const matchesTag = selectedTag === 'All' || (product.tags && product.tags.some(t => t.toLowerCase() === selectedTag.toLowerCase()))
+    
     const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                           product.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          product.features.some(f => f.toLowerCase().includes(searchQuery.toLowerCase()))
-    return matchesCategory && matchesSearch
+                          (product.features && product.features.some(f => f.toLowerCase().includes(searchQuery.toLowerCase()))) ||
+                          (product.tags && product.tags.some(t => t.toLowerCase().includes(searchQuery.toLowerCase())))
+    
+    return matchesCategory && matchesTag && matchesSearch
   })
 
   // Delete message in admin inbox
@@ -547,11 +563,13 @@ export default function App() {
                       <select
                         value={newProduct.category}
                         onChange={(e) => setNewProduct({...newProduct, category: e.target.value})}
-                        className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-4 focus:ring-biotech-100 focus:bg-white focus:border-biotech-600 transition-all outline-none bg-white"
+                        className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-4 focus:ring-biotech-100 focus:bg-white focus:border-biotech-600 transition-all outline-none bg-white text-slate-900"
                       >
                         <option value="Medicines">Medicines</option>
                         <option value="Supplements">Supplements</option>
                         <option value="Vitamins">Vitamins</option>
+                        <option value="Bio-Hacking">Bio-Hacking</option>
+                        <option value="Wellness Kits">Wellness Kits</option>
                       </select>
                     </div>
                   </div>
@@ -575,48 +593,53 @@ export default function App() {
                       <select
                         value={newProduct.badge}
                         onChange={(e) => setNewProduct({...newProduct, badge: e.target.value})}
-                        className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-4 focus:ring-biotech-100 focus:bg-white focus:border-biotech-600 transition-all outline-none bg-white"
+                        className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-4 focus:ring-biotech-100 focus:bg-white focus:border-biotech-600 transition-all outline-none bg-white text-slate-900"
                       >
-                        <option value="Eco-Choice">Eco-Choice</option>
-                        <option value="Organic">Organic</option>
-                        <option value="New">New</option>
-                        <option value="Best Seller">Best Seller</option>
-                        <option value="Vegan Choice">Vegan Choice</option>
+                        <option value="Bio-Hacking">Bio-Hacking</option>
+                        <option value="Synergy Pack">Synergy Pack</option>
+                        <option value="Advanced Tech">Advanced Tech</option>
+                        <option value="New Formulation">New Formulation</option>
                         <option value="Essential">Essential</option>
+                        <option value="Best Seller">Best Seller</option>
                       </select>
                     </div>
 
                     <div className="space-y-1 col-span-1">
-                      <label className="text-[10px] font-extrabold text-slate-600 uppercase tracking-widest block">Emoji Icon</label>
-                      <select
-                        value={newProduct.icon}
-                        onChange={(e) => setNewProduct({...newProduct, icon: e.target.value})}
-                        className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-4 focus:ring-biotech-100 focus:bg-white focus:border-biotech-600 transition-all outline-none bg-white text-base"
-                      >
-                        <option value="🌿">🌿 Herbs</option>
-                        <option value="🧬">🧬 DNA</option>
-                        <option value="💊">💊 Pill</option>
-                        <option value="🍯">🍯 Honey</option>
-                        <option value="🌸">🌸 Flower</option>
-                        <option value="💧">💧 Drops</option>
-                        <option value="🧠">🧠 Brain</option>
-                        <option value="☀️">☀️ Sun</option>
-                        <option value="⚡">⚡ Bolt</option>
-                        <option value="🍒">🍒 Cherry</option>
-                        <option value="🧪">🧪 Tube</option>
-                      </select>
+                      <label className="text-[10px] font-extrabold text-slate-600 uppercase tracking-widest block">Product Rating</label>
+                      <input
+                        type="number"
+                        step="0.1"
+                        min="1"
+                        max="5"
+                        required
+                        value={newProduct.rating}
+                        onChange={(e) => setNewProduct({...newProduct, rating: e.target.value})}
+                        className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-4 focus:ring-biotech-100 focus:bg-white focus:border-biotech-600 transition-all outline-none"
+                      />
                     </div>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-extrabold text-slate-600 uppercase tracking-widest block">Product Photo (Unsplash URL) *</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="https://images.unsplash.com/..."
+                      value={newProduct.image}
+                      onChange={(e) => setNewProduct({...newProduct, image: e.target.value})}
+                      className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-4 focus:ring-biotech-100 focus:bg-white focus:border-biotech-600 transition-all outline-none font-semibold text-slate-800"
+                    />
                   </div>
 
                   <div className="space-y-1">
                     <label className="text-[10px] font-extrabold text-slate-600 uppercase tracking-widest block">Molecular Action / Description *</label>
                     <textarea
-                      rows={3}
+                      rows={2}
                       required
                       placeholder="Write how this item targets cellular receptors and its direct biological benefits..."
                       value={newProduct.description}
                       onChange={(e) => setNewProduct({...newProduct, description: e.target.value})}
-                      className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-4 focus:ring-biotech-100 focus:bg-white focus:border-biotech-600 transition-all outline-none"
+                      className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-4 focus:ring-biotech-100 focus:bg-white focus:border-biotech-600 transition-all outline-none"
                     ></textarea>
                   </div>
 
@@ -624,10 +647,21 @@ export default function App() {
                     <label className="text-[10px] font-extrabold text-slate-600 uppercase tracking-widest block">Key Features (comma separated)</label>
                     <input
                       type="text"
-                      placeholder="99.8% Certified Purity, Liposomal, Lab-Tested"
+                      placeholder="HPLC Tested, Intracellular Carrier, Liposomal"
                       value={newProduct.featuresRaw}
                       onChange={(e) => setNewProduct({...newProduct, featuresRaw: e.target.value})}
-                      className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-4 focus:ring-biotech-100 focus:bg-white focus:border-biotech-600 transition-all outline-none"
+                      className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-4 focus:ring-biotech-100 focus:bg-white focus:border-biotech-600 transition-all outline-none"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-extrabold text-slate-600 uppercase tracking-widest block">Benefit Tags (comma separated)</label>
+                    <input
+                      type="text"
+                      placeholder="Longevity, Energy, Sleep, Repair"
+                      value={newProduct.tagsRaw}
+                      onChange={(e) => setNewProduct({...newProduct, tagsRaw: e.target.value})}
+                      className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-4 focus:ring-biotech-100 focus:bg-white focus:border-biotech-600 transition-all outline-none"
                     />
                   </div>
 
@@ -657,7 +691,7 @@ export default function App() {
                       className="flex items-center justify-between p-4 bg-slate-50/50 border border-slate-100 hover:bg-slate-50 rounded-2xl transition-all"
                     >
                       <div className="flex items-center space-x-3 text-left overflow-hidden">
-                        <span className="text-4xl bg-white p-2.5 rounded-xl border border-slate-100 flex-shrink-0">{prod.icon}</span>
+                        <img src={prod.image} alt={prod.name} className="w-14 h-14 rounded-xl object-cover border border-slate-200/80 flex-shrink-0" />
                         <div className="overflow-hidden">
                           <span className="font-bold text-slate-900 text-sm block leading-tight truncate">{prod.name}</span>
                           <span className="text-[10px] text-biotech-700 font-extrabold uppercase tracking-wider block mt-1">
@@ -831,7 +865,7 @@ export default function App() {
                     setIsAuthViewOpen(true)
                   }
                 }}
-                className="flex items-center space-x-1.5 px-4 h-11 border border-biotech-200 rounded-full text-sm font-bold text-biotech-800 hover:bg-biotech-50 hover:border-biotech-400 transition-all shadow-sm"
+                className="flex items-center space-x-1.5 px-4 h-11 border border-biotech-200 rounded-full text-sm font-bold text-biotech-800 hover:bg-biotech-50 hover:border-biotech-400 transition-all shadow-sm bg-biotech-950/20"
               >
                 <Lock className="w-4 h-4 text-biotech-600" />
                 <span>{user ? 'Staff Portal' : 'Pharmacist Login'}</span>
@@ -1038,7 +1072,7 @@ export default function App() {
       <section id="products" className="relative py-24 px-4 sm:px-6 lg:px-8 bg-transparent backdrop-blur-sm z-10 text-left">
         <div className="max-w-7xl mx-auto">
           {/* Header */}
-          <div className="flex flex-col md:flex-row md:items-end md:justify-between mb-12 gap-6">
+          <div className="flex flex-col md:flex-row md:items-end md:justify-between mb-8 gap-6">
             <div className="space-y-3">
               <h2 className="text-xs font-bold uppercase tracking-widest text-biotech-300">Diagnostics Index</h2>
               <p className="text-3xl sm:text-4xl font-extrabold text-white">
@@ -1049,12 +1083,12 @@ export default function App() {
               </p>
             </div>
 
-            {/* Filter Tabs (White and dark green) */}
+            {/* Category Tabs (White and dark green) */}
             <div className="flex flex-wrap gap-2 p-1.5 bg-white rounded-2xl max-w-max shadow-lg border border-slate-100">
-              {['All', 'Medicines', 'Supplements', 'Vitamins'].map((cat) => (
+              {['All', 'Medicines', 'Supplements', 'Vitamins', 'Bio-Hacking', 'Wellness Kits'].map((cat) => (
                 <button
                   key={cat}
-                  onClick={() => setSelectedCategory(cat)}
+                  onClick={() => { setSelectedCategory(cat); setSelectedTag('All'); }}
                   className={`px-5 py-2.5 rounded-xl text-xs font-bold transition-all ${
                     selectedCategory === cat
                       ? 'bg-biotech-800 text-white shadow-md'
@@ -1067,6 +1101,30 @@ export default function App() {
             </div>
           </div>
 
+          {/* New Tag-Filtering Panel Row (Horizontal Pills!) */}
+          <div className="flex flex-wrap items-center gap-2.5 mb-10 p-4 bg-white/10 border border-white/10 rounded-2xl backdrop-blur-md">
+            <div className="flex items-center space-x-2 text-white font-bold text-xs mr-2 border-r border-white/20 pr-4 flex-shrink-0">
+              <Filter className="w-4 h-4 text-biotech-300" />
+              <span>Target Benefit:</span>
+            </div>
+            
+            <div className="flex flex-wrap gap-2">
+              {availableTags.map((tag) => (
+                <button
+                  key={tag}
+                  onClick={() => setSelectedTag(tag)}
+                  className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all border ${
+                    selectedTag === tag
+                      ? 'bg-white text-biotech-950 border-white shadow-glow-green-sm scale-102 font-extrabold'
+                      : 'bg-white/5 text-slate-200 border-white/10 hover:bg-white/20 hover:text-white'
+                  }`}
+                >
+                  {tag === 'All' ? '🧬 All Benefits' : `# ${tag}`}
+                </button>
+              ))}
+            </div>
+          </div>
+
           {/* Search bar input */}
           <div className="mb-10 max-w-xl relative">
             <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
@@ -1074,7 +1132,7 @@ export default function App() {
             </div>
             <input
               type="text"
-              placeholder="Filter by chemical features, active compounds..."
+              placeholder="Search by keywords, molecules, tags..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-12 pr-10 py-4 bg-white/95 border border-slate-200 rounded-2xl text-slate-900 focus:ring-4 focus:ring-biotech-100 focus:border-biotech-500 transition-all outline-none font-semibold shadow-sm"
@@ -1089,14 +1147,14 @@ export default function App() {
             )}
           </div>
 
-          {/* Products Grid (Crisp clean white cards!) */}
+          {/* Products Grid (Crisp clean white cards with beautiful high-res Unsplash Photos!) */}
           {filteredProducts.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
               {filteredProducts.map((product) => (
                 <div
                   key={product.id}
                   onClick={() => setSelectedProduct(product)}
-                  className="group bg-white border border-slate-100 rounded-3xl p-6 shadow-2xl hover:shadow-biotech-500/10 hover:border-biotech-300 transform hover:-translate-y-1 cursor-pointer transition-all duration-300 flex flex-col justify-between text-slate-800"
+                  className="group bg-white border border-slate-100 rounded-3xl p-5 shadow-2xl hover:shadow-biotech-500/10 hover:border-biotech-300 transform hover:-translate-y-1 cursor-pointer transition-all duration-300 flex flex-col justify-between text-slate-800"
                 >
                   <div>
                     {/* Badge and Rating */}
@@ -1110,19 +1168,37 @@ export default function App() {
                       </span>
                     </div>
 
-                    {/* Product visual mock */}
-                    <div className="aspect-video bg-slate-50 rounded-2xl flex items-center justify-center text-5xl group-hover:scale-102 border border-slate-100 transition-all duration-300 relative overflow-hidden shadow-inner mb-4">
-                      <span>{product.icon}</span>
-                      <div className="absolute inset-0 bg-gradient-to-t from-slate-100/30 to-transparent"></div>
+                    {/* Product visual photo (No more emojis! Gorgeous real-world glass supplement containers!) */}
+                    <div className="aspect-video w-full rounded-2xl border border-slate-100/50 transition-all duration-300 relative overflow-hidden shadow-inner mb-4">
+                      <img
+                        src={product.image}
+                        alt={product.name}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        loading="lazy"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-slate-900/30 to-transparent"></div>
                     </div>
 
-                    {/* Name & Category */}
-                    <span className="text-[10px] uppercase tracking-widest font-bold text-biotech-500 block mb-1">
+                    {/* Category */}
+                    <span className="text-[10px] uppercase tracking-widest font-extrabold text-biotech-500 block mb-1">
                       {product.category}
                     </span>
-                    <h3 className="text-xl font-bold text-slate-900 group-hover:text-biotech-800 transition-colors line-clamp-1">
+                    
+                    {/* Name */}
+                    <h3 className="text-xl font-bold text-slate-900 group-hover:text-biotech-800 transition-colors leading-tight">
                       {product.name}
                     </h3>
+                    
+                    {/* Tags List */}
+                    <div className="flex flex-wrap gap-1.5 mt-2.5 mb-3">
+                      {product.tags && product.tags.map((tag, i) => (
+                        <span key={i} className="text-[9px] font-black uppercase tracking-wider bg-slate-100 text-slate-500 px-2.5 py-0.5 rounded-full">
+                          #{tag}
+                        </span>
+                      ))}
+                    </div>
+
+                    {/* Description */}
                     <p className="text-slate-600 text-sm mt-2 line-clamp-2 leading-relaxed">
                       {product.description}
                     </p>
@@ -1150,10 +1226,10 @@ export default function App() {
               </div>
               <h3 className="text-xl font-bold text-slate-900 mb-2">Molecular index empty</h3>
               <p className="text-slate-600 text-sm">
-                No active formulas found for category "{selectedCategory}" matching: <strong className="text-biotech-800">"{searchQuery}"</strong>. Try checking 'B12', 'silver', or 'peptide'.
+                No active formulas found matching Category "{selectedCategory}", Tag "{selectedTag}" and term: <strong className="text-biotech-800">"{searchQuery}"</strong>. Try checking other benefit combinations.
               </p>
               <button
-                onClick={() => { setSearchQuery(''); setSelectedCategory('All'); }}
+                onClick={() => { setSearchQuery(''); setSelectedCategory('All'); setSelectedTag('All'); }}
                 className="mt-6 px-5 py-2.5 bg-biotech-800 text-white font-bold rounded-xl text-xs hover:bg-biotech-700 transition-all"
               >
                 Reset Search Index
@@ -1189,7 +1265,7 @@ export default function App() {
                   </div>
                   <div>
                     <h4 className="font-bold text-slate-900 text-sm">Ultra-Pure Sourcing</h4>
-                    <p className="text-slate-500 text-xs mt-0.5">Operating under heavy-metal-free protocols, yielding 99.8% pure assays.</p>
+                    <p className="text-slate-400 text-xs mt-0.5">Operating under heavy-metal-free protocols, yielding 99.8% pure assays.</p>
                   </div>
                 </div>
 
@@ -1199,7 +1275,7 @@ export default function App() {
                   </div>
                   <div>
                     <h4 className="font-bold text-slate-900 text-sm">Thermal Locked Logistics</h4>
-                    <p className="text-slate-500 text-xs mt-0.5">Active molecular formulations are locked in temperature-controlled pods.</p>
+                    <p className="text-slate-400 text-xs mt-0.5">Active molecular formulations are locked in temperature-controlled pods.</p>
                   </div>
                 </div>
               </div>
@@ -1337,7 +1413,7 @@ export default function App() {
               <p className="text-3xl sm:text-4xl font-extrabold text-white leading-tight">
                 Connect directly with our compounding dispensary.
               </p>
-              <p className="text-slate-300 leading-relaxed">
+              <p className="text-slate-400 leading-relaxed">
                 Need to transfer active clinical prescriptions? Or inquire about custom compounding with rice/potato hypoallergenic binders? Submit our secure, encrypted form and a molecular pharmacist will reply within 15 minutes.
               </p>
             </div>
@@ -1484,7 +1560,7 @@ export default function App() {
       </section>
 
       {/* --- FOOTER --- */}
-      <footer className="relative bg-[#031509] text-slate-400 py-16 px-4 sm:px-6 lg:px-8 z-10 border-t border-white/10 text-left">
+      <footer className="relative bg-[#020703] text-slate-500 py-16 px-4 sm:px-6 lg:px-8 z-10 border-t border-white/10 text-left">
         <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-12 border-b border-white/10 pb-12">
           {/* Brand with Logo */}
           <div className="space-y-4">
@@ -1782,14 +1858,14 @@ export default function App() {
           <div className="relative bg-white border border-slate-100 max-w-lg w-full rounded-3xl overflow-hidden shadow-2xl animate-scaleUp text-left text-slate-800">
             
             {/* Visual Header Banner */}
-            <div className="bg-[#f0fdf4] p-8 flex items-center justify-center text-8xl relative border-b border-biotech-100">
+            <div className="bg-[#f0fdf4] p-0 flex items-center justify-center text-8xl relative border-b border-biotech-100 h-64 overflow-hidden">
               <button
                 onClick={() => setSelectedProduct(null)}
-                className="absolute top-4 right-4 p-1.5 bg-white hover:bg-slate-100 border border-slate-200 text-slate-400 hover:text-slate-700 rounded-full transition-colors"
+                className="absolute top-4 right-4 p-1.5 bg-white hover:bg-slate-100 border border-slate-200 text-slate-400 hover:text-slate-700 rounded-full transition-colors z-10"
               >
                 <X className="w-5 h-5" />
               </button>
-              <span>{selectedProduct.icon}</span>
+              <img src={selectedProduct.image} alt={selectedProduct.name} className="w-full h-full object-cover" />
               <span className="absolute bottom-4 left-6 bg-white border border-biotech-100 text-biotech-800 text-[10px] font-extrabold px-3 py-1 rounded-full uppercase tracking-widest">
                 {selectedProduct.category}
               </span>
@@ -1803,6 +1879,15 @@ export default function App() {
                   <span>{selectedProduct.rating} Verified Clinical Rating</span>
                 </div>
                 <h3 className="text-2xl font-black tracking-tight text-slate-900">{selectedProduct.name}</h3>
+                
+                {/* Tags inside Modal */}
+                <div className="flex flex-wrap gap-1.5 mt-2">
+                  {selectedProduct.tags && selectedProduct.tags.map((tag, i) => (
+                    <span key={i} className="text-[9px] font-extrabold uppercase tracking-wider bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full">
+                      #{tag}
+                    </span>
+                  ))}
+                </div>
               </div>
 
               <p className="text-slate-600 text-sm leading-relaxed">
@@ -1842,7 +1927,7 @@ export default function App() {
                         message: `Hello Central Pharm! I am highly interested in the compound formula "${selectedProduct.name}" and would like to coordinate custom delivery and absorption options. Please contact me!`
                       }))
                     }}
-                    className="px-5 py-3 bg-biotech-800 hover:bg-biotech-700 text-white font-black rounded-xl text-xs transition-all w-full text-center uppercase tracking-wider shadow-md"
+                    className="px-5 py-3 bg-biotech-800 hover:bg-biotech-750 text-white font-black rounded-xl text-xs transition-all w-full text-center uppercase tracking-wider shadow-md"
                   >
                     Consult Dispatch
                   </button>
