@@ -7,10 +7,14 @@ export const products = [
     price: 18.99,
     rating: 4.9,
     badge: "Gen-2 Formulation",
-    image: "https://images.unsplash.com/photo-1608571423902-eed4a5ad8108?auto=format&fit=crop&q=80&w=600", // Glass ointment jar
+    image: "https://images.unsplash.com/photo-1608571423902-eed4a5ad8108?auto=format&fit=crop&q=80&w=600",
     description: "Highly advanced peptide ointment. Rapidly binds to skin cells to accelerate dermal barrier repair and trigger neural calming pathways.",
     features: ["Cellular Peptides", "Rapid absorption", "Dermatologist Certified"],
-    tags: ["Defense", "Repair", "Clinical"]
+    tags: ["Defense", "Repair", "Clinical"],
+    strength: "3.5% Active Peptides",
+    servingSize: "50ml Airless Pump",
+    formula: "Pep-Barrier-G2",
+    status: "In Stock"
   },
   {
     id: "med-2",
@@ -19,10 +23,14 @@ export const products = [
     price: 14.50,
     rating: 4.8,
     badge: "Advanced Tech",
-    image: "https://images.unsplash.com/photo-1607619056574-7b8d3ee536b2?auto=format&fit=crop&q=80&w=600", // Amber dropper spray bottle
+    image: "https://images.unsplash.com/photo-1607619056574-7b8d3ee536b2?auto=format&fit=crop&q=80&w=600",
     description: "Formulated with stabilized bio-active silver nano-colloids and wild throat-soothing enzymes for instant immune defense.",
     features: ["Nano-colloid delivery", "Broad-spectrum soothing", "Alcohol-free"],
-    tags: ["Defense", "Immune", "Fast Acting"]
+    tags: ["Defense", "Immune", "Fast Acting"],
+    strength: "20 PPM Stabilized Silver",
+    servingSize: "30ml Spray Bottle",
+    formula: "AgO-Colloid",
+    status: "In Stock"
   },
   {
     id: "med-3",
@@ -31,10 +39,14 @@ export const products = [
     price: 24.00,
     rating: 4.7,
     badge: "Neuro-Focus",
-    image: "https://images.unsplash.com/photo-1550572017-edd951b55104?auto=format&fit=crop&q=80&w=600", // Dropper bottle
+    image: "https://images.unsplash.com/photo-1550572017-edd951b55104?auto=format&fit=crop&q=80&w=600",
     description: "Liquid lipid formula designed to instantly cross the blood-brain barrier to alleviate cortisol overproduction and restore neurotransmitter balance.",
     features: ["Liposomal delivery", "Hormonal equilibrium", "Rapid action"],
-    tags: ["Sleep", "Stress", "Cognitive"]
+    tags: ["Sleep", "Stress", "Cognitive"],
+    strength: "1000mcg Active Co-factors",
+    servingSize: "30ml Dropper Bottle",
+    formula: "C10H16N5O13P3",
+    status: "In Stock"
   },
 
   // 2. Supplements
@@ -45,10 +57,14 @@ export const products = [
     price: 49.99,
     rating: 5.0,
     badge: "Longevity King",
-    image: "https://images.unsplash.com/photo-1584017911766-d451b3d0e843?auto=format&fit=crop&q=80&w=600", // Premium supplement capsules
+    image: "https://images.unsplash.com/photo-1584017911766-d451b3d0e843?auto=format&fit=crop&q=80&w=600",
     description: "Pure Beta-Nicotinamide Mononucleotide. Directly raises NAD+ levels to revitalize mitochondrial respiration, restore telomeres, and fight aging.",
     features: ["99.8% Certified Purity", "Mitochondrial catalyst", "DNA-Repetitive Repair"],
-    tags: ["Longevity", "Energy", "Cellular"]
+    tags: ["Longevity", "Energy", "Cellular"],
+    strength: "500mg Pure NMN",
+    servingSize: "60 Veggie Capsules",
+    formula: "C11H15N2O8P",
+    status: "In Stock"
   },
   {
     id: "sup-2",
@@ -57,10 +73,14 @@ export const products = [
     price: 36.00,
     rating: 4.8,
     badge: "Mind Catalyst",
-    image: "https://images.unsplash.com/photo-1550572017-edd951b55104?auto=format&fit=crop&q=80&w=600", // Supplement pills jar
+    image: "https://images.unsplash.com/photo-1550572017-edd951b55104?auto=format&fit=crop&q=80&w=600",
     description: "Targeted psychobiotics linking gut flora with brain health. Increases cognitive endurance, clarity, and boosts dopamine synthesis pathways.",
     features: ["100 Billion Organisms", "Enteric protected capsules", "Brain-Gut optimizer"],
-    tags: ["Cognitive", "Stress", "Digestive"]
+    tags: ["Cognitive", "Stress", "Digestive"],
+    strength: "100 Billion CFU",
+    servingSize: "30 Delayed-Release Caps",
+    formula: "Prob-Synapse-L12",
+    status: "In Stock"
   },
   {
     id: "sup-3",
@@ -69,10 +89,14 @@ export const products = [
     price: 29.99,
     rating: 4.9,
     badge: "Pure Source",
-    image: "https://images.unsplash.com/photo-1611070973770-b1a6726b0c6e?auto=format&fit=crop&q=80&w=600", // Gel capsules
+    image: "https://images.unsplash.com/photo-1611070973770-b1a6726b0c6e?auto=format&fit=crop&q=80&w=600",
     description: "Premium heavy-metal free vegan Omega-3 extracted from marine microalgae. Direct EPA/DHA source for rapid neuro-vascular support.",
     features: ["Zero heavy-metals", "Cold-fractionated extraction", "No fishy odor"],
-    tags: ["Cognitive", "Longevity", "Heart"]
+    tags: ["Cognitive", "Longevity", "Heart"],
+    strength: "1200mg Algal Oil",
+    servingSize: "60 Softgels",
+    formula: "DHA-EPA-Algae",
+    status: "In Stock"
   },
 
   // 3. Vitamins
@@ -83,10 +107,14 @@ export const products = [
     price: 19.99,
     rating: 4.9,
     badge: "High Potency",
-    image: "https://images.unsplash.com/photo-1550572017-edd951b55104?auto=format&fit=crop&q=80&w=600", // Vitamin liquid bottle
+    image: "https://images.unsplash.com/photo-1550572017-edd951b55104?auto=format&fit=crop&q=80&w=600",
     description: "High-absorption Vitamin D3 with Vitamin K2 (MK-7). Formulated specifically to trigger calcium absorption and promote bone-density longevity.",
     features: ["10000 IU + 200mcg K2", "Liquid lipid base", "Highly bioavailable"],
-    tags: ["Immune", "Longevity", "Defense"]
+    tags: ["Immune", "Longevity", "Defense"],
+    strength: "10,000 IU D3 / 200mcg K2",
+    servingSize: "30ml Dropper Bottle",
+    formula: "Colecalciferol-K2",
+    status: "In Stock"
   },
   {
     id: "vit-2",
@@ -95,13 +123,17 @@ export const products = [
     price: 38.50,
     rating: 4.8,
     badge: "Cell Fuel",
-    image: "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&q=80&w=600", // Medicine pills
+    image: "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&q=80&w=600",
     description: "Complete daily active vitamins combined with plant co-factors and powerful antioxidants. Promotes rapid energy production at the cellular level.",
     features: ["Coenzyme vitamins", "Rich in minerals", "No synthetic binders"],
-    tags: ["Energy", "Immune", "Active"]
+    tags: ["Energy", "Immune", "Active"],
+    strength: "Full Spectrum Bio-Complex",
+    servingSize: "90 Veggie Capsules",
+    formula: "Co-Factor-Gold",
+    status: "In Stock"
   },
 
-  // 4. Bio-Hacking (New Category!)
+  // 4. Bio-Hacking
   {
     id: "bio-1",
     name: "NAD+ Regenerative Accelerator",
@@ -109,10 +141,14 @@ export const products = [
     price: 64.00,
     rating: 5.0,
     badge: "Advanced Longevity",
-    image: "https://images.unsplash.com/photo-1626847037657-fd3622613ce3?auto=format&fit=crop&q=80&w=600", // Laboratory glass container
+    image: "https://images.unsplash.com/photo-1626847037657-fd3622613ce3?auto=format&fit=crop&q=80&w=600",
     description: "Liquid coenzyme formulation triggering rapid NAD+ synthesis. Restores deep cellular longevity, DNA transcription accuracy, and muscle metabolism.",
     features: ["Intracellular carrier", "HPLC 99.9% Purity", "Anti-senescence active"],
-    tags: ["Longevity", "Cellular", "Energy"]
+    tags: ["Longevity", "Cellular", "Energy"],
+    strength: "250mg Sublingual NAD+",
+    servingSize: "50ml Spray Bottle",
+    formula: "NAD-Coenzyme-I",
+    status: "In Stock"
   },
   {
     id: "bio-2",
@@ -121,13 +157,17 @@ export const products = [
     price: 45.00,
     rating: 4.9,
     badge: "Cognitive Elite",
-    image: "https://images.unsplash.com/photo-1471864190281-a93a3070b6de?auto=format&fit=crop&q=80&w=600", // Tech pills
+    image: "https://images.unsplash.com/photo-1471864190281-a93a3070b6de?auto=format&fit=crop&q=80&w=600",
     description: "Premium brain compound raising dopamine and acetylcholine availability. Accelerates focus acquisition, long-term memory consolidation, and flow states.",
     features: ["Clinical neural cofactor", "Hypoallergenic", "Fast synaptic transit"],
-    tags: ["Cognitive", "Energy", "Active"]
+    tags: ["Cognitive", "Energy", "Active"],
+    strength: "350mg Brain Co-factors",
+    servingSize: "60 Veggie Capsules",
+    formula: "C20H25N3O",
+    status: "In Stock"
   },
 
-  // 5. Wellness Kits (New Category!)
+  // 5. Wellness Kits
   {
     id: "kit-1",
     name: "Mitochondrial Bio-Hacking Kit",
@@ -135,10 +175,14 @@ export const products = [
     price: 110.00,
     rating: 5.0,
     badge: "Synergy Pack",
-    image: "https://images.unsplash.com/photo-1616671276441-2f2c277b8bf4?auto=format&fit=crop&q=80&w=600", // Pack of medicine bottles
+    image: "https://images.unsplash.com/photo-1616671276441-2f2c277b8bf4?auto=format&fit=crop&q=80&w=600",
     description: "Complete longevity bundle including NMN Longevity Matrix, Sun-D3 Drops, and Coenzyme B12. Restores cellular energy output in 14 days.",
     features: ["Curated clinical stack", "Compostable gift box", "Custom dosing chart"],
-    tags: ["Longevity", "Energy", "Immune"]
+    tags: ["Longevity", "Energy", "Immune"],
+    strength: "Combined Therapeutic Stack",
+    servingSize: "3-Bottle Cure Pack",
+    formula: "Stack-Mito-Longevity",
+    status: "In Stock"
   },
   {
     id: "kit-2",
@@ -147,9 +191,13 @@ export const products = [
     price: 75.00,
     rating: 4.8,
     badge: "Zen Protocol",
-    image: "https://images.unsplash.com/photo-1544816155-12df9643f363?auto=format&fit=crop&q=80&w=600", // Herbal kit
+    image: "https://images.unsplash.com/photo-1544816155-12df9643f363?auto=format&fit=crop&q=80&w=600",
     description: "Dual relief bundle with Synaptic Stress Drops and Forest Psychobiotics to lower evening cortisol and trigger deep, restorative REM sleep cycles.",
     features: ["Hypoallergenic binders", "Gastro-enteric protected", "Free bio-consultation"],
-    tags: ["Sleep", "Stress", "Cognitive"]
+    tags: ["Sleep", "Stress", "Cognitive"],
+    strength: "Dual Recovery Protocol",
+    servingSize: "2-Bottle Cure Pack",
+    formula: "Zen-Cortisol-Sleep",
+    status: "In Stock"
   }
 ];

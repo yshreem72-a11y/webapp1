@@ -107,7 +107,7 @@ export default function App() {
   // Dynamic Product list (loads from localStorage or initialProducts static data)
   const [productsList, setProductsList] = useState([])
 
-  // State to manage new product form
+  // State to manage new product form with extended clinical fields!
   const [newProduct, setNewProduct] = useState({
     name: '',
     category: 'Medicines',
@@ -117,7 +117,11 @@ export default function App() {
     description: '',
     rating: '5.0',
     featuresRaw: 'HPLC Tested, Intracellular Carrier, Liposomal',
-    tagsRaw: 'Longevity, Energy' // Comma-separated tags
+    tagsRaw: 'Longevity, Energy',
+    strength: '500mg Active Dose',
+    servingSize: '60 Veggie Capsules',
+    formula: 'C11H15N2O8P',
+    status: 'In Stock'
   })
 
   // Contact Form States
@@ -245,7 +249,7 @@ export default function App() {
         confetti({
           particleCount: 120,
           spread: 60,
-          colors: ['#00ff66', '#ffffff']
+          colors: ['#00ff66', '#bbf7d0', '#ffffff']
         })
         alert("Staff account registered successfully! Logged in as licensed pharmacist.")
         setIsAuthViewOpen(false)
@@ -309,7 +313,7 @@ export default function App() {
     }, 5000)
   }
 
-  // Handle Adding New Product
+  // Handle Adding New Product (With extensive specifications customization!)
   const handleAddProduct = (e) => {
     e.preventDefault()
     if (!newProduct.name || !newProduct.price || !newProduct.description) {
@@ -334,10 +338,14 @@ export default function App() {
       price: parseFloat(newProduct.price) || 0,
       rating: parseFloat(newProduct.rating) || 5.0,
       badge: newProduct.badge,
-      image: newProduct.image || 'https://images.unsplash.com/photo-1584017911766-d451b3d0e843?auto=format&fit=crop&q=80&w=600', // Defaults to our premium container photo
+      image: newProduct.image || 'https://images.unsplash.com/photo-1584017911766-d451b3d0e843?auto=format&fit=crop&q=80&w=600',
       description: newProduct.description,
       features: features.length > 0 ? features : ["100% Pure", "Lab-tested"],
-      tags: tags.length > 0 ? tags : ["Wellness", "Longevity"]
+      tags: tags.length > 0 ? tags : ["Wellness", "Longevity"],
+      strength: newProduct.strength || "Standard Strength",
+      servingSize: newProduct.servingSize || "30 Servings",
+      formula: newProduct.formula || "Clinical Proprietary",
+      status: newProduct.status || "In Stock"
     }
 
     const updatedInventory = [newlyCreatedItem, ...productsList]
@@ -361,10 +369,14 @@ export default function App() {
       description: '',
       rating: '5.0',
       featuresRaw: 'HPLC Tested, Intracellular Carrier, Liposomal',
-      tagsRaw: 'Longevity, Energy'
+      tagsRaw: 'Longevity, Energy',
+      strength: '500mg Active Dose',
+      servingSize: '60 Veggie Capsules',
+      formula: 'C11H15N2O8P',
+      status: 'In Stock'
     })
 
-    alert("Medication registered successfully!")
+    alert("Medication registered with advanced molecular specifications!")
   }
 
   // Handle Deleting Product
@@ -534,14 +546,14 @@ export default function App() {
           {dashboardTab === 'inventory' && (
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
               
-              {/* Left Column: Register Product form */}
+              {/* Left Column: Register Product form with extended clinical fields */}
               <div className="lg:col-span-5 bg-white p-6 sm:p-8 rounded-3xl border border-biotech-100 shadow-xl text-left space-y-6">
                 <div>
                   <h3 className="text-xl font-extrabold text-slate-900 flex items-center space-x-2">
                     <Plus className="w-5 h-5 text-biotech-700" />
                     <span>Register Bio-Active Stock</span>
                   </h3>
-                  <p className="text-xs text-slate-500 mt-1">Register molecular structures instantly into the storefront active catalog.</p>
+                  <p className="text-xs text-slate-500 mt-1">Configure advanced molecular properties for deep clinical search indices.</p>
                 </div>
 
                 <form onSubmit={handleAddProduct} className="space-y-4">
@@ -551,7 +563,7 @@ export default function App() {
                       <input
                         type="text"
                         required
-                        placeholder="e.g. Zinc Peptide"
+                        placeholder="e.g. Pure Zinc Peptide"
                         value={newProduct.name}
                         onChange={(e) => setNewProduct({...newProduct, name: e.target.value})}
                         className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-4 focus:ring-biotech-100 focus:bg-white focus:border-biotech-600 transition-all outline-none"
@@ -616,6 +628,55 @@ export default function App() {
                         onChange={(e) => setNewProduct({...newProduct, rating: e.target.value})}
                         className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-4 focus:ring-biotech-100 focus:bg-white focus:border-biotech-600 transition-all outline-none"
                       />
+                    </div>
+                  </div>
+
+                  {/* Extended Customizations block */}
+                  <div className="grid grid-cols-2 gap-4 p-4 bg-slate-50 border border-slate-100 rounded-2xl">
+                    <div className="space-y-1 text-left">
+                      <label className="text-[9px] font-black text-biotech-800 uppercase block">Dosage Strength *</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. 500mg NAD+"
+                        value={newProduct.strength}
+                        onChange={(e) => setNewProduct({...newProduct, strength: e.target.value})}
+                        className="w-full px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs outline-none"
+                      />
+                    </div>
+
+                    <div className="space-y-1 text-left">
+                      <label className="text-[9px] font-black text-biotech-800 uppercase block">Serving Size / Form *</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. 60 Veggie Caps"
+                        value={newProduct.servingSize}
+                        onChange={(e) => setNewProduct({...newProduct, servingSize: e.target.value})}
+                        className="w-full px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs outline-none"
+                      />
+                    </div>
+
+                    <div className="space-y-1 text-left mt-2">
+                      <label className="text-[9px] font-black text-biotech-800 uppercase block">Molecular Formula *</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. C11H15N2O8P"
+                        value={newProduct.formula}
+                        onChange={(e) => setNewProduct({...newProduct, formula: e.target.value})}
+                        className="w-full px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs outline-none"
+                      />
+                    </div>
+
+                    <div className="space-y-1 text-left mt-2">
+                      <label className="text-[9px] font-black text-biotech-800 uppercase block">Stock Status *</label>
+                      <select
+                        value={newProduct.status}
+                        onChange={(e) => setNewProduct({...newProduct, status: e.target.value})}
+                        className="w-full px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs outline-none bg-white text-slate-800 font-semibold"
+                      >
+                        <option value="In Stock">🟢 In Stock</option>
+                        <option value="Pre-Order">🟡 Pre-Order Only</option>
+                        <option value="Compounding">🔵 Compounding Lab</option>
+                      </select>
                     </div>
                   </div>
 
@@ -698,6 +759,8 @@ export default function App() {
                             {prod.category}
                           </span>
                           <span className="text-xs text-slate-500 font-bold block mt-0.5">${prod.price.toFixed(2)}</span>
+                          {/* Dosage indicator */}
+                          <span className="text-[9px] text-slate-400 font-bold block mt-0.5">{prod.strength || "Standard Strength"}</span>
                         </div>
                       </div>
 
@@ -1179,10 +1242,16 @@ export default function App() {
                       <div className="absolute inset-0 bg-gradient-to-t from-slate-900/30 to-transparent"></div>
                     </div>
 
-                    {/* Category */}
-                    <span className="text-[10px] uppercase tracking-widest font-extrabold text-biotech-500 block mb-1">
-                      {product.category}
-                    </span>
+                    {/* Category & Status */}
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span className="text-[10px] uppercase tracking-widest font-extrabold text-biotech-500 block">
+                        {product.category}
+                      </span>
+                      {/* Clinical status indicator */}
+                      <span className="text-[9px] font-black uppercase text-slate-400">
+                        {product.status || "In Stock"}
+                      </span>
+                    </div>
                     
                     {/* Name */}
                     <h3 className="text-xl font-bold text-slate-900 group-hover:text-biotech-800 transition-colors leading-tight">
@@ -1265,7 +1334,7 @@ export default function App() {
                   </div>
                   <div>
                     <h4 className="font-bold text-slate-900 text-sm">Ultra-Pure Sourcing</h4>
-                    <p className="text-slate-400 text-xs mt-0.5">Operating under heavy-metal-free protocols, yielding 99.8% pure assays.</p>
+                    <p className="text-slate-500 text-xs mt-0.5">Operating under heavy-metal-free protocols, yielding 99.8% pure assays.</p>
                   </div>
                 </div>
 
@@ -1275,7 +1344,7 @@ export default function App() {
                   </div>
                   <div>
                     <h4 className="font-bold text-slate-900 text-sm">Thermal Locked Logistics</h4>
-                    <p className="text-slate-400 text-xs mt-0.5">Active molecular formulations are locked in temperature-controlled pods.</p>
+                    <p className="text-slate-500 text-xs mt-0.5">Active molecular formulations are locked in temperature-controlled pods.</p>
                   </div>
                 </div>
               </div>
@@ -1773,7 +1842,7 @@ export default function App() {
                   <div className="bg-[#f0fdf4] text-biotech-900 text-lg w-10 h-10 flex items-center justify-center rounded-full font-bold">
                     🌿
                   </div>
-                  <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full bg-emerald-400 border border-biotech-800"></span>
+                  <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full bg-emerald-400 border-2 border-white"></span>
                 </div>
                 <div className="text-left">
                   <span className="block font-bold text-sm text-white">Sarah, PharmD</span>
@@ -1824,7 +1893,7 @@ export default function App() {
               <button
                 type="submit"
                 disabled={!chatInput.trim()}
-                className="p-2.5 bg-biotech-800 hover:bg-biotech-700 disabled:opacity-50 text-white rounded-xl transition-all"
+                className="p-2.5 bg-biotech-800 hover:bg-biotech-750 text-white rounded-xl transition-all"
               >
                 <ArrowRight className="w-4 h-4" />
               </button>
@@ -1906,6 +1975,36 @@ export default function App() {
                       <span className="font-semibold">{feature}</span>
                     </div>
                   ))}
+                </div>
+              </div>
+
+              {/* Advanced Specification Sheet Grid (Exactly what the user wanted!) */}
+              <div className="p-4 bg-slate-50 border border-slate-100 rounded-2xl space-y-3">
+                <span className="block text-[10px] font-black uppercase tracking-widest text-slate-400">Advanced Product Specifications</span>
+                
+                <div className="grid grid-cols-2 gap-4 text-xs font-semibold text-slate-600">
+                  <div className="flex flex-col space-y-0.5">
+                    <span className="text-[9px] uppercase font-black text-biotech-800">🧪 Molecular Formula</span>
+                    <span className="text-slate-900 font-bold text-sm tracking-wide bg-white px-2.5 py-1 rounded-lg border border-slate-100">{selectedProduct.formula || "Clinical Proprietary"}</span>
+                  </div>
+
+                  <div className="flex flex-col space-y-0.5">
+                    <span className="text-[9px] uppercase font-black text-biotech-800">⚖️ Dosage Strength</span>
+                    <span className="text-slate-900 font-bold text-sm bg-white px-2.5 py-1 rounded-lg border border-slate-100">{selectedProduct.strength || "Standard"}</span>
+                  </div>
+
+                  <div className="flex flex-col space-y-0.5 mt-2">
+                    <span className="text-[9px] uppercase font-black text-biotech-800">📦 Serving Size / Volume</span>
+                    <span className="text-slate-900 font-bold text-sm bg-white px-2.5 py-1 rounded-lg border border-slate-100">{selectedProduct.servingSize || "30 Servings"}</span>
+                  </div>
+
+                  <div className="flex flex-col space-y-0.5 mt-2">
+                    <span className="text-[9px] uppercase font-black text-biotech-800">🟢 Inventory Status</span>
+                    <span className="text-slate-900 font-bold text-sm bg-white px-2.5 py-1 rounded-lg border border-slate-100 flex items-center space-x-1.5">
+                      <span className={`w-2 h-2 rounded-full ${selectedProduct.status === 'In Stock' ? 'bg-emerald-500 animate-pulse' : 'bg-amber-400'}`}></span>
+                      <span>{selectedProduct.status || "In Stock"}</span>
+                    </span>
+                  </div>
                 </div>
               </div>
 
