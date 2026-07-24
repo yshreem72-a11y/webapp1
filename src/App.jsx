@@ -43,13 +43,7 @@ import {
   Grid,
   ExternalLink,
   KeyRound,
-  Filter,
-  ShoppingBag,
-  CornerUpLeft,
-  FlaskConical,
-  Droplets,
-  Sun,
-  ArrowUpRight
+  Filter
 } from 'lucide-react'
 
 // Icon helper to render correct lucide icon from string name
@@ -99,6 +93,14 @@ export default function App() {
   // List of all active benefit tags for advanced tag filter pills
   const availableTags = ['All', 'Longevity', 'Energy', 'Sleep', 'Defense', 'Cognitive', 'Repair']
 
+  // Live Chat Simulator State
+  const [isChatOpen, setIsChatOpen] = useState(false)
+  const [chatMessages, setChatMessages] = useState([
+    { sender: 'bot', text: 'Hello! I am Sarah, your registered molecular pharmacist. How can I assist you with your biotech and cellular optimization today? 🧬' }
+  ])
+  const [chatInput, setChatInput] = useState('')
+  const chatEndRef = useRef(null)
+
   // FAQ Accordion State
   const [openFaq, setOpenFaq] = useState(null)
 
@@ -134,39 +136,6 @@ export default function App() {
 
   // Submissions (stored in localStorage)
   const [submissions, setSubmissions] = useState([])
-
-  // --- MOCK PRODUCT DETAILS FOR CAROUSEL ---
-  const carouselCards = [
-    {
-      icon: <FlaskConical className="w-5 h-5 text-white" />,
-      bg: "bg-black",
-      text: "Experience our newly enhanced molecular focus formula."
-    },
-    {
-      icon: <Leaf className="w-5 h-5 text-white" />,
-      bg: "bg-emerald-800",
-      text: "Pure organic botanical ingredients sourced sustainably."
-    },
-    {
-      icon: <Droplets className="w-5 h-5 text-white" />,
-      bg: "bg-cyan-800",
-      text: "Advanced liposomal bioavailability for rapid cellular absorption."
-    },
-    {
-      icon: <Sun className="w-5 h-5 text-white" />,
-      bg: "bg-amber-700",
-      text: "Clinically tested for consistent daily mitochondrial energy."
-    }
-  ]
-  const [activeCarouselIndex, setActiveCarouselIndex] = useState(0)
-
-  // Auto cycle carousel card every 3500ms
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setActiveCarouselIndex((prev) => (prev + 1) % carouselCards.length)
-    }, 3500)
-    return () => clearInterval(timer)
-  }, [])
 
   // Load products, submissions, and auth status on mount
   useEffect(() => {
@@ -231,6 +200,13 @@ export default function App() {
 
     return () => unsubscribe()
   }, [])
+
+  // Auto scroll chat to bottom
+  useEffect(() => {
+    if (chatEndRef.current) {
+      chatEndRef.current.scrollIntoView({ behavior: 'smooth' })
+    }
+  }, [chatMessages, isChatOpen])
 
   // Handle Firebase Login / Signup submission
   const handleAuthSubmit = async (e) => {
@@ -412,6 +388,36 @@ export default function App() {
     }
   }
 
+  // Handle Chat Submit
+  const handleChatSubmit = (e) => {
+    e.preventDefault()
+    if (!chatInput.trim()) return
+
+    const userMsg = { sender: 'user', text: chatInput }
+    setChatMessages(prev => [...prev, userMsg])
+    setChatInput('')
+
+    // Simulate pharmacist response
+    setTimeout(() => {
+      let responseText = "Thank you for sharing. Let me check that molecular pathway for you. Are you tracking specific symptoms?"
+      const inputLower = chatInput.toLowerCase()
+      
+      if (inputLower.includes('hello') || inputLower.includes('hi')) {
+        responseText = "Hello there! What biotech or pharmacological questions can I answer for you today? 🧬"
+      } else if (inputLower.includes('delivery') || inputLower.includes('shipping')) {
+        responseText = "We offer same-day clinical courier delivery. Our thermal-locked containers preserve all bio-active peptides perfectly! 🚲"
+      } else if (inputLower.includes('prescription') || inputLower.includes('rx')) {
+        responseText = "Prescription transfer is completely automated. Submit our secure encryption contact form at the bottom, and we will port your records within 15 minutes."
+      } else if (inputLower.includes('supplement') || inputLower.includes('vitamin') || inputLower.includes('nmn')) {
+        responseText = "All molecules, including our premium NMN Longevity Matrix, undergo certified HPLC purity testing. You can search our active database right on this page!"
+      } else if (inputLower.includes('organic') || inputLower.includes('natural')) {
+        responseText = "Indeed. We compound using zero heavy metals, microplastics, or standard chemical binders."
+      }
+
+      setChatMessages(prev => [...prev, { sender: 'bot', text: responseText }])
+    }, 1200)
+  }
+
   // Filter and Search Products by category, keyword query AND active tag-pill!
   const filteredProducts = productsList.filter(product => {
     const matchesCategory = selectedCategory === 'All' || product.category === selectedCategory
@@ -486,6 +492,7 @@ export default function App() {
 
             {/* Controls */}
             <div className="flex items-center space-x-3">
+              {/* Secondary user identification status */}
               <div className="hidden lg:block text-right pr-2">
                 <span className="text-[10px] text-slate-400 uppercase tracking-widest font-extrabold block">Authorized Session</span>
                 <span className="text-xs text-slate-900 font-extrabold block mt-0.5 truncate max-w-[150px]">{user.email}</span>
@@ -556,7 +563,7 @@ export default function App() {
                       <input
                         type="text"
                         required
-                        placeholder="e.g. Zinc Peptide"
+                        placeholder="e.g. Pure Zinc Peptide"
                         value={newProduct.name}
                         onChange={(e) => setNewProduct({...newProduct, name: e.target.value})}
                         className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-4 focus:ring-biotech-100 focus:bg-white focus:border-biotech-600 transition-all outline-none"
@@ -876,306 +883,265 @@ export default function App() {
 
   // STANDARD PUBLIC PORTAL: Crisp white card containers overlaid on dark forest-green 3D canvas background!
   return (
-    <div className="relative min-h-screen bg-[#052410] text-white selection:bg-biotech-200 selection:text-biotech-950 overflow-hidden font-sans flex flex-col">
+    <div className="relative min-h-screen bg-[#052410] text-white selection:bg-biotech-200 selection:text-biotech-950 overflow-x-hidden font-sans">
       
       {/* ThreeJS Background Canvas */}
       <ThreeCanvas />
 
-      {/* --- ELITE LIQUID-GLASS NAVBAR --- */}
-      <nav className="sticky top-0 z-40 backdrop-blur-md bg-transparent transition-all duration-300 w-full animate-fade-in">
-        <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10 py-4 lg:py-5 flex items-center justify-between">
-          {/* Left: Custom SVG Logo Component */}
-          <div className="cursor-pointer animate-slide-left delay-200" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
-            <Logo className="h-10" textClassName="text-white" />
-          </div>
-
-          {/* Center (Desktop only, hidden on mobile): Liquid-glass nav pill */}
-          <div className="hidden md:flex liquid-glass rounded-full px-8 py-3 items-center space-x-8 text-sm font-semibold animate-fade-in delay-400">
-            <a href="#hero" className="text-white hover:text-[#00ff66] transition-colors">Home</a>
-            <a href="#services" className="text-white/70 hover:text-white transition-colors">Our Approach</a>
-            <a href="#products" className="text-white/70 hover:text-white transition-colors">Apothecary Shop</a>
-            <a href="#about" className="text-white/70 hover:text-white transition-colors">Healing Methods</a>
-            <a href="#faq" className="text-white/70 hover:text-white transition-colors">Patient FAQs</a>
-            <a href="#contact" className="text-white/70 hover:text-white transition-colors">Consultation</a>
-            
-            {/* Only displays if pharmacist is logged in */}
-            {user && (
-              <button
-                onClick={() => setIsDashboardActive(true)}
-                className="text-white hover:text-biotech-300 font-black flex items-center space-x-1.5 animate-pulse"
-              >
-                <Grid className="w-4 h-4 text-[#00ff66]" />
-                <span>Dashboard</span>
-              </button>
-            )}
-          </div>
-
-          {/* Right: Row of buttons, avatar + mobile menu toggle */}
-          <div className="flex items-center space-x-3.5 lg:space-x-4.5 animate-slide-right delay-300">
-            {/* Search, shopping bag, and return icons */}
-            <a href="#products" className="liquid-glass w-10 h-10 rounded-full flex items-center justify-center text-white/90 hover:text-[#00ff66] transition-colors" title="Search Catalogue">
-              <Search className="w-5 h-5 stroke-[1.5]" />
-            </a>
-
-            <a href="#products" className="liquid-glass w-10 h-10 rounded-full flex items-center justify-center text-white/90 hover:text-[#00ff66] transition-colors" title="Shopping Bag">
-              <ShoppingBag className="w-5 h-5 stroke-[1.5]" />
-            </a>
-
-            <button
-              onClick={() => {
-                if (user) {
-                  setIsDashboardActive(true)
-                } else {
-                  setIsAuthViewOpen(true)
-                }
-              }}
-              className="liquid-glass w-10 h-10 rounded-full flex items-center justify-center text-white/90 hover:text-[#00ff66] transition-colors"
-              title="Pharmacist Login Portal"
-            >
-              <Lock className="w-4.5 h-4.5 stroke-[1.5] text-white" />
-            </button>
-
-            {/* Round avatar image */}
-            <div className="relative group">
-              <img
-                src="https://polo-pecan-73837341.figma.site/_assets/v11/ca8093996e970200cbcf8bde8744175e52da5a79.png"
-                alt="Pharmacist Avatar"
-                className="w-8 h-8 lg:w-10 lg:h-10 rounded-full object-cover border border-white/20 shadow-glow-green-sm"
-              />
-              <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-emerald-400 border border-[#052410]"></span>
+      {/* --- HEADER & NAVIGATION --- */}
+      <header className="sticky top-0 z-40 backdrop-blur-md bg-white/95 border-b border-biotech-100/50 transition-all duration-300">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-20">
+            {/* Custom Logo Component */}
+            <div className="cursor-pointer" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
+              <Logo className="h-10" textClassName="text-slate-900" />
             </div>
 
-            {/* Hamburger menu button */}
-            <button
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="md:hidden liquid-glass w-10 h-10 rounded-full flex items-center justify-center text-white focus:outline-none"
-            >
-              {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-            </button>
+            {/* Desktop Nav (Clean dark green text on white header) */}
+            <nav className="hidden md:flex items-center space-x-8 font-bold text-biotech-800">
+              <a href="#hero" className="hover:text-biotech-500 transition-colors">Home</a>
+              <a href="#services" className="hover:text-biotech-500 transition-colors">Ethos</a>
+              <a href="#products" className="hover:text-biotech-500 transition-colors">Catalog</a>
+              <a href="#about" className="hover:text-biotech-500 transition-colors">About</a>
+              <a href="#faq" className="hover:text-biotech-500 transition-colors">FAQs</a>
+              <a href="#contact" className="hover:text-biotech-500 transition-colors">Inquire</a>
+              
+              {/* Only displays if pharmacist is logged in */}
+              {user && (
+                <button
+                  onClick={() => setIsDashboardActive(true)}
+                  className="text-white hover:text-biotech-300 font-black flex items-center space-x-1.5 bg-biotech-950 border border-biotech-500/40 px-3.5 py-1 rounded-xl shadow-glow-green-sm animate-pulse"
+                >
+                  <Grid className="w-4.5 h-4.5" />
+                  <span>Dashboard</span>
+                </button>
+              )}
+            </nav>
+
+            {/* CTA & Admin Buttons */}
+            <div className="hidden md:flex items-center space-x-4">
+              <button
+                onClick={() => {
+                  if (user) {
+                    setIsDashboardActive(true)
+                  } else {
+                    setIsAuthViewOpen(true)
+                  }
+                }}
+                className="flex items-center space-x-1.5 px-4 h-11 border border-biotech-200 rounded-full text-sm font-bold text-biotech-800 hover:bg-biotech-50 hover:border-biotech-400 transition-all shadow-sm bg-biotech-950/20"
+              >
+                <Lock className="w-4 h-4 text-biotech-600" />
+                <span>{user ? 'Staff Portal' : 'Pharmacist Login'}</span>
+                {!user && submissions.filter(s => s.status === 'Unread').length > 0 && (
+                  <span className="bg-emerald-500 text-white text-[10px] w-5 h-5 flex items-center justify-center rounded-full font-bold animate-pulse">
+                    {submissions.filter(s => s.status === 'Unread').length}
+                  </span>
+                )}
+              </button>
+
+              <a
+                href="#products"
+                className="flex items-center justify-center px-5 h-11 bg-biotech-800 hover:bg-biotech-700 text-white rounded-full text-sm font-extrabold shadow active:scale-95 transition-all"
+              >
+                Explore Molecules
+              </a>
+            </div>
+
+            {/* Mobile Menu Button */}
+            <div className="md:hidden flex items-center space-x-2">
+              <button
+                onClick={() => {
+                  if (user) {
+                    setIsDashboardActive(true)
+                  } else {
+                    setIsAuthViewOpen(true)
+                  }
+                }}
+                className="relative p-2 text-biotech-800 hover:text-biotech-600"
+                title="Staff Portal"
+              >
+                <Lock className="w-5 h-5" />
+                {!user && submissions.filter(s => s.status === 'Unread').length > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-emerald-500 text-white text-[9px] w-4 h-4 flex items-center justify-center rounded-full font-bold">
+                    {submissions.filter(s => s.status === 'Unread').length}
+                  </span>
+                )}
+              </button>
+              <button
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                className="p-2 text-biotech-800 hover:text-biotech-600 focus:outline-none"
+              >
+                <Menu className="w-6 h-6" />
+              </button>
+            </div>
           </div>
         </div>
 
-        {/* Mobile menu overlay */}
+        {/* Mobile Nav Dropdown */}
         {isMobileMenuOpen && (
-          <div className="md:hidden fixed inset-0 bg-black/90 z-30 flex flex-col items-center justify-center animate-fadeIn text-center text-white">
-            <div className="space-y-8 flex flex-col text-2xl font-semibold">
-              <a href="#hero" onClick={() => setIsMobileMenuOpen(false)} className="hover:text-[#00ff66]">Home</a>
-              <a href="#services" onClick={() => setIsMobileMenuOpen(false)} className="hover:text-[#00ff66]">Our Approach</a>
-              <a href="#products" onClick={() => setIsMobileMenuOpen(false)} className="hover:text-[#00ff66]">Apothecary Shop</a>
-              <a href="#about" onClick={() => setIsMobileMenuOpen(false)} className="hover:text-[#00ff66]">Healing Methods</a>
-              <a href="#faq" onClick={() => setIsMobileMenuOpen(false)} className="hover:text-[#00ff66]">FAQs</a>
-              <a href="#contact" onClick={() => setIsMobileMenuOpen(false)} className="hover:text-[#00ff66]">Consultation</a>
+          <div className="md:hidden bg-white border-b border-biotech-100 backdrop-blur-lg animate-fadeIn text-left shadow-lg">
+            <div className="px-4 pt-2 pb-6 space-y-3">
+              <a href="#hero" onClick={() => setIsMobileMenuOpen(false)} className="block px-3 py-2 rounded-lg text-base font-bold text-biotech-800 hover:bg-slate-50">Home</a>
+              <a href="#services" onClick={() => setIsMobileMenuOpen(false)} className="block px-3 py-2 rounded-lg text-base font-bold text-biotech-800 hover:bg-slate-50">Ethos</a>
+              <a href="#products" onClick={() => setIsMobileMenuOpen(false)} className="block px-3 py-2 rounded-lg text-base font-bold text-biotech-800 hover:bg-slate-50">Catalog</a>
+              <a href="#about" onClick={() => setIsMobileMenuOpen(false)} className="block px-3 py-2 rounded-lg text-base font-bold text-biotech-800 hover:bg-slate-50">About</a>
+              <a href="#faq" onClick={() => setIsMobileMenuOpen(false)} className="block px-3 py-2 rounded-lg text-base font-bold text-biotech-800 hover:bg-slate-50">FAQs</a>
+              <a href="#contact" onClick={() => setIsMobileMenuOpen(false)} className="block px-3 py-2 rounded-lg text-base font-bold text-biotech-800 hover:bg-slate-50">Inquire</a>
+              
               {user && (
                 <button
                   onClick={() => { setIsMobileMenuOpen(false); setIsDashboardActive(true); }}
-                  className="px-6 py-2 rounded-xl bg-biotech-950 text-white font-black text-sm uppercase border border-biotech-800"
+                  className="w-full text-left px-3 py-2 rounded-lg text-base font-bold text-white bg-biotech-950 border border-biotech-900"
                 >
-                  Dashboard
+                  Go to Dashboard
                 </button>
               )}
-            </div>
-            
-            <div className="absolute bottom-12 flex flex-col items-center space-y-2">
-              <img
-                src="https://polo-pecan-73837341.figma.site/_assets/v11/ca8093996e970200cbcf8bde8744175e52da5a79.png"
-                alt="Pharmacist Avatar"
-                className="w-12 h-12 rounded-full object-cover border border-white/20 shadow-glow-green-sm"
-              />
-              <span className="text-sm font-light text-white/60">Dispensary Account</span>
+
+              <div className="pt-2">
+                <a
+                  href="#products"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="w-full text-center block py-3 bg-biotech-800 text-white font-black rounded-xl"
+                >
+                  Explore Molecules
+                </a>
+              </div>
             </div>
           </div>
         )}
-      </nav>
+      </header>
 
-      {/* --- FULL-VIEWPORT HERO SECTION WITH REVEAL ANIMATIONS --- */}
-      <section id="hero" className="relative flex-1 flex flex-col justify-center py-12 px-5 sm:px-8 lg:px-10 overflow-hidden z-10 text-left min-h-[calc(100vh-80px)]">
-        <div className="max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-12 items-center flex-1">
-          
-          {/* Left Column Hero Content */}
-          <div className="lg:col-span-8 space-y-6 md:space-y-8 z-10">
-            {/* Staggered Word Reveal Headline */}
-            <h1 className="font-normal tracking-tight text-white select-none leading-none
-              text-[48px] sm:text-[80px] md:text-[110px] lg:text-[130px] xl:text-[155px]"
-              style={{ fontFamily: "'DM Sans', sans-serif", letterSpacing: "-0.05em" }}
-            >
-              {/* Line 1 */}
-              <div className="flex flex-wrap items-center">
-                <span className="inline-block overflow-hidden mr-3 sm:mr-5">
-                  <span className="inline-block animate-word-reveal delay-300"><span>The</span></span>
-                </span>
-                <span className="inline-block overflow-hidden mr-3 sm:mr-5">
-                  <span className="inline-block animate-word-reveal delay-400"><span>Power</span></span>
-                </span>
-                <span className="inline-block overflow-hidden">
-                  <span className="inline-block animate-word-reveal opacity-45 delay-500"><span>of</span></span>
-                </span>
-              </div>
+      {/* --- HERO SECTION (Text remains glowing white overlay on top of deep green 3D background canvas) --- */}
+      <section id="hero" className="relative min-h-[calc(100vh-80px)] flex items-center justify-start py-12 px-4 sm:px-6 lg:px-8 overflow-hidden z-10 text-left">
+        <div className="max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-12">
+          {/* Main Hero Copy */}
+          <div className="lg:col-span-7 flex flex-col justify-center text-left space-y-6 md:space-y-8">
+            <div className="inline-flex items-center space-x-2 bg-white/10 border border-white/20 backdrop-blur-md px-4 py-1.5 rounded-full text-white font-bold text-xs tracking-wider uppercase animate-float max-w-max">
+              <span className="flex h-2.5 w-2.5 relative">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-white"></span>
+              </span>
+              <span>🧬 ADVANCED BIO-PHARMACOLOGY</span>
+            </div>
 
-              {/* Line 2 */}
-              <div className="flex flex-wrap items-center">
-                <span className="inline-block overflow-hidden mr-3 sm:mr-5">
-                  <span className="inline-block animate-word-reveal opacity-45 delay-600"><span>Nature</span></span>
-                </span>
-                <span className="inline-block overflow-hidden mr-3 sm:mr-5">
-                  <span className="inline-block animate-word-reveal opacity-45 delay-700"><span>in</span></span>
-                </span>
-                <span className="inline-block overflow-hidden">
-                  <span className="inline-block animate-word-reveal delay-800"><span>Every</span></span>
-                </span>
-              </div>
-
-              {/* Line 3 */}
-              <div className="flex flex-wrap items-center">
-                <span className="inline-block overflow-hidden">
-                  <span className="inline-block animate-word-reveal delay-900"><span>Capsule</span></span>
-                </span>
-                {/* Inline leaf/capsule image graphic */}
-                <img
-                  src="https://polo-pecan-73837341.figma.site/_assets/v11/6a7de4fbe9c9e2315040607320a9ff5e93117bf4.png"
-                  alt="Capsule Specimen"
-                  className="hidden sm:inline-block align-middle ml-4 lg:ml-6 animate-scale-in delay-1000 object-contain h-[60px] sm:h-[100px] lg:h-[140px] w-auto filter drop-shadow-[0_0_15px_rgba(0,255,100,0.3)]"
-                />
-              </div>
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black text-white tracking-tight leading-none">
+              Optimize your biology. <span className="text-transparent bg-clip-text bg-gradient-to-r from-biotech-300 to-white underline decoration-white/40 decoration-8 underline-offset-4">Extend lifespan.</span>
             </h1>
 
-            {/* CTA Section */}
-            <div className="flex flex-col sm:flex-row items-center gap-5 sm:gap-8 lg:gap-[50px] pt-4 animate-fade-up delay-600">
-              {/* Button */}
+            <p className="text-lg text-slate-200 max-w-xl leading-relaxed">
+              Welcome to <strong className="text-white font-extrabold">Central Pharm</strong>, where clinical microbiology converges with molecular health optimization. Explore high-absorption vitamins, heavy-metal-free compounds, and 24/7 registered pharmacist support.
+            </p>
+
+            {/* Quick interactive search banner in Hero */}
+            <div className="p-1.5 bg-white/95 border border-biotech-100 rounded-2xl flex flex-col sm:flex-row items-center gap-2 max-w-lg shadow-2xl backdrop-blur-md">
+              <div className="flex items-center space-x-3 w-full px-3 py-2 text-slate-500">
+                <Search className="w-5 h-5 text-biotech-700" />
+                <input
+                  type="text"
+                  placeholder="Query molecular structures (e.g. NMN, Omega-3, D3...)"
+                  value={searchQuery}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value)
+                    const section = document.getElementById('products')
+                    if (section) section.scrollIntoView({ behavior: 'smooth' })
+                  }}
+                  className="bg-transparent border-0 text-slate-900 focus:outline-none focus:ring-0 placeholder-slate-400 text-sm w-full font-semibold"
+                />
+              </div>
               <a
                 href="#products"
-                className="liquid-glass hover:bg-white/10 hover:shadow-glow-green w-full sm:w-[240px] md:w-[280px] lg:w-[310px] h-14 sm:h-16 lg:h-[72px] rounded-xl flex items-center justify-center space-x-2 text-white font-medium text-base sm:text-lg lg:text-xl tracking-tight transition-all duration-300"
-                style={{ fontFamily: "'Inter', sans-serif" }}
+                className="w-full sm:w-auto flex h-12 px-6 items-center justify-center bg-biotech-800 hover:bg-biotech-700 text-white font-black rounded-xl whitespace-nowrap transition-all shadow hover:translate-x-1"
               >
-                <span>Explore Now</span>
-                <ArrowUpRight className="w-5 h-5 text-[#00ff66]" />
+                Search Index
               </a>
+            </div>
 
-              {/* Description copy */}
-              <p
-                className="text-white/80 max-w-[310px] text-sm sm:text-base lg:text-lg leading-relaxed text-left tracking-tight"
-                style={{ fontFamily: "'Inter', sans-serif" }}
-              >
-                Discover our advanced plant-based molecular supplements for daily bio-balance and clean energy.
-              </p>
+            {/* Hero Stats */}
+            <div className="grid grid-cols-3 gap-4 pt-4 max-w-md border-t border-white/20">
+              <div>
+                <span className="block text-2xl font-black text-white">99.8%</span>
+                <span className="block text-xs font-semibold text-biotech-200">Certified Purity</span>
+              </div>
+              <div>
+                <span className="block text-2xl font-black text-white">Zero</span>
+                <span className="block text-xs font-semibold text-biotech-200">Synthetic Fillers</span>
+              </div>
+              <div>
+                <span className="block text-2xl font-black text-white">24/7</span>
+                <span className="block text-xs font-semibold text-biotech-200">Active Support</span>
+              </div>
             </div>
           </div>
 
-          {/* Right Column: Tablet-only product placeholder image bleeding (lg:hidden) */}
-          <div className="lg:hidden w-full relative z-0 mt-8 overflow-hidden">
-            <img
-              src="https://polo-pecan-73837341.figma.site/_assets/v11/50ad042b3cd48a2e120ea3ba17c8cfeaf3cc334c.png"
-              alt="Floating Biotech Bottle"
-              className="w-[180%] sm:w-[151%] max-w-[1296px] object-contain mx-auto filter drop-shadow-[0_20px_50px_rgba(0,0,0,0.5)] -mb-[140px] sm:-mb-[180px] animate-scale-in delay-800"
-            />
+          {/* Interactive floating model helper tag in Desktop */}
+          <div className="hidden lg:col-span-5 lg:flex flex-col justify-end items-end space-y-4">
+            <div className="bg-white/10 border border-white/20 p-4 rounded-2xl shadow-2xl backdrop-blur-md max-w-[280px] pointer-events-auto transform hover:-translate-y-2 transition-transform duration-300 text-left">
+              <div className="flex items-center space-x-2 text-white font-bold mb-1">
+                <Info className="w-5 h-5 text-biotech-300" />
+                <span className="text-sm">Interactive 3D Art</span>
+              </div>
+              <p className="text-xs text-slate-200 leading-relaxed">
+                Scroll the webpage to see the DNA helix and white-green molecular pills align. Drag elements around with your cursor!
+              </p>
+            </div>
           </div>
-
         </div>
       </section>
 
-      {/* --- DESKTOP FLOATING ABSOLUTE PRODUCT CONTAINER (lg+ only) --- */}
-      <div className="hidden lg:block absolute z-0 pointer-events-none w-[50vw] max-w-[1412px] h-auto bottom-[-5%] right-[-15%] lg:right-[-5%] xl:right-[0%] animate-scale-in delay-700">
-        <img
-          src="https://polo-pecan-73837341.figma.site/_assets/v11/50ad042b3cd48a2e120ea3ba17c8cfeaf3cc334c.png"
-          alt="Floating Biotech Bottle Desktop"
-          className="w-full h-full object-contain filter drop-shadow-[0_25px_60px_rgba(0,0,0,0.6)] animate-float"
-        />
-      </div>
-
-      {/* --- ELITE BOTTOM 3-PANEL GRID FOOTER --- */}
-      <section className="relative z-10 grid grid-cols-1 md:grid-cols-[2fr_1.5fr_2fr] w-full border-t border-white/10 overflow-hidden shadow-2xl">
-        
-        {/* Panel 1: Personal Path (Light cream-gray background) */}
-        <div className="bg-[#ECEDEC] p-8 sm:p-10 lg:p-12 text-slate-900 text-left relative overflow-hidden min-h-[220px] sm:min-h-[260px] animate-fade-up delay-900 flex flex-col justify-between">
-          <div className="space-y-4 z-10 max-w-[350px]">
-            <h4 className="text-2xl sm:text-[28px] lg:text-[35px] font-normal leading-tight tracking-tight text-slate-950" style={{ fontFamily: "'DM Sans', sans-serif" }}>
-              Start your personalized path to natural balance.
-            </h4>
-            <a href="#contact" className="inline-block text-base lg:text-lg font-semibold tracking-tight border-b-2 border-slate-900 hover:text-biotech-700 hover:border-biotech-700 transition-colors">
-              Personal Assessment
-            </a>
-          </div>
-          
-          {/* Decorative multiplier graphic */}
-          <img
-            src="https://polo-pecan-73837341.figma.site/_assets/v11/6736cbe6e26afa2cd7c04a91892a79f7640785b5.png"
-            alt="Organic Plant Outline"
-            className="absolute right-0 bottom-0 h-full w-auto object-contain mix-blend-multiply opacity-80 pointer-events-none"
-          />
-        </div>
-
-        {/* Panel 2: Auto-cycling Card Carousel (White background) */}
-        <div className="bg-[#FEFDF9] p-8 sm:p-10 lg:p-12 text-slate-900 text-left relative min-h-[220px] sm:min-h-[260px] animate-fade-up delay-1000 flex flex-col justify-between border-y md:border-y-0 md:border-x border-slate-200/60">
-          {/* Active Card Frame */}
-          <div className="relative h-24 sm:h-28 overflow-hidden">
-            {carouselCards.map((card, idx) => {
-              const isActive = activeCarouselIndex === idx
-              return (
-                <div
-                  key={idx}
-                  className={`absolute inset-0 flex items-start space-x-4 transition-all duration-700 ${
-                    isActive ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'
-                  }`}
-                >
-                  <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center flex-shrink-0 ${card.bg} shadow-md`}>
-                    {card.icon}
-                  </div>
-                  <p className="text-slate-800 font-medium text-sm sm:text-base lg:text-lg leading-snug tracking-tight" style={{ fontFamily: "'Inter', sans-serif" }}>
-                    {card.text}
-                  </p>
-                </div>
-              )
-            })}
+      {/* --- SERVICES / ETHOS SECTION (Gorgeous White Cards floating on Dark Green) --- */}
+      <section id="services" className="relative py-24 px-4 sm:px-6 lg:px-8 bg-[#041c0c]/85 border-y border-white/10 backdrop-blur-sm z-10 text-left">
+        <div className="max-w-7xl mx-auto">
+          {/* Section title */}
+          <div className="text-center max-w-3xl mx-auto space-y-4 mb-16">
+            <h2 className="text-xs font-bold uppercase tracking-widest text-biotech-300">Biological Integrity</h2>
+            <p className="text-3xl sm:text-4xl font-extrabold text-white">
+              Advanced Clinical Diagnostics & Formulation
+            </p>
+            <p className="text-slate-300 leading-relaxed">
+              Standard pharmacies output millions of tons of synthetic chemical binders and microplastics. Central Pharm is designed with molecular-level biological integrity.
+            </p>
           </div>
 
-          {/* Carousel dots (Thin bars) */}
-          <div className="flex space-x-2 w-full pt-4">
-            {carouselCards.map((_, idx) => (
+          {/* Services Cards Grid (Bright crisp white backgrounds!) */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {services.map((srv) => (
               <div
-                key={idx}
-                className={`h-1 flex-1 rounded-full transition-all duration-500 ${
-                  activeCarouselIndex === idx ? 'bg-slate-900' : 'bg-slate-900/20'
-                }`}
-              />
+                key={srv.id}
+                className="bg-white border border-slate-100 rounded-3xl p-6 shadow-xl transform hover:-translate-y-1.5 transition-all duration-300 flex flex-col justify-between text-slate-800"
+              >
+                <div className="space-y-4">
+                  <div className="bg-[#f0fdf4] text-biotech-800 p-4 rounded-2xl inline-block shadow-inner">
+                    <ServiceIcon name={srv.icon} className="w-8 h-8" />
+                  </div>
+                  <h3 className="text-xl font-bold text-slate-900">{srv.title}</h3>
+                  <p className="text-slate-600 text-sm leading-relaxed">{srv.description}</p>
+                </div>
+                
+                <div className="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between text-xs font-extrabold text-biotech-800">
+                  <span>{srv.benefit}</span>
+                  {srv.id === 'serv-1' && (
+                    <span className="flex items-center space-x-1 bg-biotech-100 text-biotech-900 px-2.5 py-0.5 rounded-full text-[10px] animate-pulse">
+                      <span>●</span> <span>MONITORING ACTIVE</span>
+                    </span>
+                  )}
+                </div>
+              </div>
             ))}
           </div>
         </div>
-
-        {/* Panel 3: Stats Pack (Midnight Black background) */}
-        <div className="bg-black p-8 sm:p-10 lg:p-12 text-white text-left relative min-h-[220px] sm:min-h-[260px] animate-fade-up delay-1100 flex items-center justify-between border-slate-900">
-          {/* Left product package render */}
-          <img
-            src="https://polo-pecan-73837341.figma.site/_assets/v11/30e8f38d1f993c357a3be2721557fc899d5640fc.png"
-            alt="Molar capsules pack"
-            className="w-[120px] h-[82px] sm:w-[150px] h-[100px] lg:w-[190px] h-[130px] object-contain flex-shrink-0 filter drop-shadow-[0_0_15px_rgba(255,255,255,0.15)]"
-          />
-
-          {/* Right stats */}
-          <div className="space-y-1.5 flex flex-col justify-center pl-4 max-w-[200px]">
-            <span className="text-2xl sm:text-3xl lg:text-[35px] font-bold text-white tracking-tight leading-none" style={{ fontFamily: "'Inter', sans-serif" }}>
-              +14K
-            </span>
-            <p className="text-white/60 text-xs sm:text-sm lg:text-base leading-snug tracking-tight" style={{ fontFamily: "'Inter', sans-serif" }}>
-              People have already optimized their cellular wellness.
-            </p>
-          </div>
-        </div>
-
       </section>
 
-      {/* --- THE INTERACTIVE PUBLIC PRODUCTS CATALOG (Next block under the fold) --- */}
-      <div className="relative bg-[#052410] z-20 w-full pt-20 pb-12 border-t border-white/10 text-slate-800">
-        
-        {/* Public Storefront Block */}
-        <section id="products" className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10 text-left">
-          
+      {/* --- PRODUCT HIGHLIGHTS & LIVE SEARCH --- */}
+      <section id="products" className="relative py-24 px-4 sm:px-6 lg:px-8 bg-transparent backdrop-blur-sm z-10 text-left">
+        <div className="max-w-7xl mx-auto">
           {/* Header */}
-          <div className="flex flex-col md:flex-row md:items-end md:justify-between mb-8 gap-6 text-white">
-            <div className="space-y-3 text-left">
-              <h2 className="text-xs font-bold uppercase tracking-widest text-[#00ff66]">Active Dispensary</h2>
+          <div className="flex flex-col md:flex-row md:items-end md:justify-between mb-8 gap-6">
+            <div className="space-y-3">
+              <h2 className="text-xs font-bold uppercase tracking-widest text-biotech-300">Diagnostics Index</h2>
               <p className="text-3xl sm:text-4xl font-extrabold text-white">
                 Biotech Longevity Repository
               </p>
-              <p className="text-slate-300 max-w-xl leading-relaxed">
+              <p className="text-slate-200 max-w-xl leading-relaxed">
                 Query, filter, and inspect our live directory of ethically formulated active compounds, telomere catalysts, and brain probiotics.
               </p>
             </div>
@@ -1198,10 +1164,10 @@ export default function App() {
             </div>
           </div>
 
-          {/* Dynamic Tag-Filtering Panel Row (Horizontal Pills!) */}
+          {/* New Tag-Filtering Panel Row (Horizontal Pills!) */}
           <div className="flex flex-wrap items-center gap-2.5 mb-10 p-4 bg-white/10 border border-white/10 rounded-2xl backdrop-blur-md">
             <div className="flex items-center space-x-2 text-white font-bold text-xs mr-2 border-r border-white/20 pr-4 flex-shrink-0">
-              <Filter className="w-4 h-4 text-[#00ff66]" />
+              <Filter className="w-4 h-4 text-biotech-300" />
               <span>Target Benefit:</span>
             </div>
             
@@ -1265,7 +1231,7 @@ export default function App() {
                       </span>
                     </div>
 
-                    {/* Product visual photo */}
+                    {/* Product visual photo (No more emojis! Gorgeous real-world glass supplement containers!) */}
                     <div className="aspect-video w-full rounded-2xl border border-slate-100/50 transition-all duration-300 relative overflow-hidden shadow-inner mb-4">
                       <img
                         src={product.image}
@@ -1281,6 +1247,7 @@ export default function App() {
                       <span className="text-[10px] uppercase tracking-widest font-extrabold text-biotech-500 block">
                         {product.category}
                       </span>
+                      {/* Clinical status indicator */}
                       <span className="text-[9px] font-black uppercase text-slate-400">
                         {product.status || "In Stock"}
                       </span>
@@ -1332,14 +1299,14 @@ export default function App() {
               </p>
               <button
                 onClick={() => { setSearchQuery(''); setSelectedCategory('All'); setSelectedTag('All'); }}
-                className="mt-6 px-5 py-2.5 bg-biotech-800 text-white font-bold rounded-xl text-xs hover:bg-biotech-750 transition-all"
+                className="mt-6 px-5 py-2.5 bg-biotech-800 text-white font-bold rounded-xl text-xs hover:bg-biotech-700 transition-all"
               >
                 Reset Search Index
               </button>
             </div>
           )}
-        </section>
-      </div>
+        </div>
+      </section>
 
       {/* --- ABOUT US / CLINICAL STORY (White containers) --- */}
       <section id="about" className="relative py-24 px-4 sm:px-6 lg:px-8 bg-[#041c0c]/95 border-y border-white/10 backdrop-blur-md z-10 text-left">
@@ -1367,7 +1334,7 @@ export default function App() {
                   </div>
                   <div>
                     <h4 className="font-bold text-slate-900 text-sm">Ultra-Pure Sourcing</h4>
-                    <p className="text-slate-400 text-xs mt-0.5">Operating under heavy-metal-free protocols, yielding 99.8% pure assays.</p>
+                    <p className="text-slate-500 text-xs mt-0.5">Operating under heavy-metal-free protocols, yielding 99.8% pure assays.</p>
                   </div>
                 </div>
 
@@ -1377,12 +1344,12 @@ export default function App() {
                   </div>
                   <div>
                     <h4 className="font-bold text-slate-900 text-sm">Thermal Locked Logistics</h4>
-                    <p className="text-slate-400 text-xs mt-0.5">Active molecular formulations are locked in temperature-controlled pods.</p>
+                    <p className="text-slate-500 text-xs mt-0.5">Active molecular formulations are locked in temperature-controlled pods.</p>
                   </div>
                 </div>
               </div>
 
-              <div className="bg-[#f0fdf4] border border-[#bbf7d0] p-4 rounded-2xl flex items-center space-x-3 text-xs text-biotech-800 leading-relaxed font-bold font-sans">
+              <div className="bg-[#f0fdf4] border border-[#bbf7d0] p-4 rounded-2xl flex items-center space-x-3 text-xs text-biotech-800 leading-relaxed font-bold">
                 <span>⚡</span>
                 <p>We leverage high-performance liquid chromatography (HPLC) to verify active molecule counts in every batch.</p>
               </div>
@@ -1390,7 +1357,7 @@ export default function App() {
           </div>
 
           {/* Story Narrative */}
-          <div className="lg:col-span-7 space-y-6 text-white text-left">
+          <div className="lg:col-span-7 space-y-6">
             <h2 className="text-xs font-bold uppercase tracking-widest text-biotech-300">About Central Pharm</h2>
             <p className="text-3xl sm:text-4xl font-extrabold text-white leading-tight">
               Pioneering custom bio-compounding and cellular longevity.
@@ -1515,7 +1482,7 @@ export default function App() {
               <p className="text-3xl sm:text-4xl font-extrabold text-white leading-tight">
                 Connect directly with our compounding dispensary.
               </p>
-              <p className="text-slate-300 leading-relaxed">
+              <p className="text-slate-400 leading-relaxed">
                 Need to transfer active clinical prescriptions? Or inquire about custom compounding with rice/potato hypoallergenic binders? Submit our secure, encrypted form and a molecular pharmacist will reply within 15 minutes.
               </p>
             </div>
@@ -1788,7 +1755,7 @@ export default function App() {
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute inset-y-0 right-4 flex items-center text-slate-400 hover:text-slate-800"
+                      className="absolute inset-y-0 right-4 flex items-center text-slate-400 hover:text-slate-600"
                     >
                       {showPassword ? <EyeOff className="w-4.5 h-4.5" /> : <Eye className="w-4.5 h-4.5" />}
                     </button>
@@ -1826,7 +1793,7 @@ export default function App() {
                   ) : (
                     <>
                       <Lock className="w-4 h-4" />
-                      <span>{authMode === 'login' ? 'Authenticate Portal' : 'Register Profile'}</span>
+                      <span>{authMode === 'login' ? 'Authenticate Profile' : 'Register Profile'}</span>
                     </>
                   )}
                 </button>
@@ -1875,7 +1842,7 @@ export default function App() {
                   <div className="bg-[#f0fdf4] text-biotech-900 text-lg w-10 h-10 flex items-center justify-center rounded-full font-bold">
                     🌿
                   </div>
-                  <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full bg-emerald-400 border border-biotech-800"></span>
+                  <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full bg-emerald-400 border-2 border-white"></span>
                 </div>
                 <div className="text-left">
                   <span className="block font-bold text-sm text-white">Sarah, PharmD</span>
